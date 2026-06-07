@@ -32,8 +32,13 @@ at comes up more often.
   of all ~2,600 words.
 - Add your own words, move words between buckets, reset stats per word or globally.
 - Light and dark themes.
-- Progress is saved in the browser, and can be exported to / imported from
-  `progress.csv` for backup.
+- An RPG layer: XP and levels, a customizable character, and attributes that
+  level up as you study (Power, Consistency, Memory, Wisdom, Focus, Diligence).
+- Multiple profiles, each with its own save file and character. A new profile
+  starts from scratch — every word in the Archive backlog, level 1.
+- Progress is saved in the browser and can be exported to / imported from a CSV.
+  Each profile saves to its own file, named `progress_<profile>_<date>.csv`, so
+  it's clear which profile and day a save belongs to.
 
 ## Data
 

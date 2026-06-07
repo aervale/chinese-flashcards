@@ -472,12 +472,16 @@ function progressCSV(){const e=s=>`"${String(s).replace(/"/g,'""')}"`;
   const rows=[["hanzi","pinyin","bucket","hsk","freq","correct","incorrect","total","accuracy"].map(e).join(",")];
   words.forEach(w=>{const t=w.correct+w.wrong;rows.push([w.hanzi,w.pinyin,w.bucket,w.hsk||"",w.freq||"",w.correct,w.wrong,t,t?Math.round(100*w.correct/t):""].map(e).join(","));});
   return rows.join("\n");}
-let fileHandle=null;
-async function saveProgress(){const csv=progressCSV();
-  if(window.showSaveFilePicker){try{if(!fileHandle)fileHandle=await window.showSaveFilePicker({suggestedName:"progress.csv",types:[{description:"CSV",accept:{"text/csv":[".csv"]}}]});
-    const ws=await fileHandle.createWritable();await ws.write(csv);await ws.close();toast("Progress saved to file");return;}catch(e){if(e.name==="AbortError")return;}}
-  const b=new Blob([csv],{type:"text/csv"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download="progress.csv";a.click();URL.revokeObjectURL(u);toast("progress.csv downloaded");}
-async function autosave(){if(fileHandle){try{const ws=await fileHandle.createWritable();await ws.write(progressCSV());await ws.close();}catch(e){}}}
+let fileHandles={};
+function profName(id){return (profiles.find(p=>p.id===(id||activeId))||{}).name||"profile";}
+function todayISO(){return new Date().toISOString().slice(0,10);}
+function csvName(id){return "progress_"+profName(id).replace(/[^a-z0-9]+/gi,"_")+"_"+todayISO()+".csv";}
+function downloadFile(name,content){const b=new Blob([content],{type:"text/csv"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+async function saveProgress(){const csv=progressCSV();const fn=csvName();
+  if(window.showSaveFilePicker){try{if(!fileHandles[activeId])fileHandles[activeId]=await window.showSaveFilePicker({suggestedName:fn,types:[{description:"CSV",accept:{"text/csv":[".csv"]}}]});
+    const ws=await fileHandles[activeId].createWritable();await ws.write(csv);await ws.close();toast("Saved "+profName());return;}catch(e){if(e.name==="AbortError")return;}}
+  downloadFile(fn,csv);toast(fn+" downloaded");}
+async function autosave(){const h=fileHandles[activeId];if(h){try{const ws=await h.createWritable();await ws.write(progressCSV());await ws.close();}catch(e){}}}
 function loadProgress(){const inp=document.createElement("input");inp.type="file";inp.accept=".csv";
   inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();
     r.onload=()=>{try{applyCSV(r.result);save();renderStats();renderChips();buildQueue();nextCard();renderBrowse();closeModal();toast("Progress loaded");}catch(e){alert("Could not read file");}};r.readAsText(f);};inp.click();}
@@ -585,8 +589,17 @@ function switchProfile(id){if(id===activeId)return;activeId=id;localStorage.setI
   words=loadWords();game=JSON.parse(localStorage.getItem(gkey())||"null");initGame();applyAccent();
   skipPool=new Set();weakest=false;activeBuckets=new Set(["Daily","Bidaily"]);
   renderStats();renderChips();buildQueue();nextCard();renderBrowse();toast("Switched to "+(profiles.find(p=>p.id===id)||{}).name);}
+function blankWords(){return SEED.map(x=>({...x,bucket:"Archive",correct:0,wrong:0,streak:0}));}
 function createProfile(){const name=(prompt("New profile name:","Player "+(profiles.length+1))||"").trim();if(!name)return;
-  const id=pid();profiles.push({id,name});localStorage.setItem(PKEY,JSON.stringify(profiles));switchProfile(id);}
+  const id=pid();profiles.push({id,name});localStorage.setItem(PKEY,JSON.stringify(profiles));
+  // brand-new profile = clean slate: every word in Archive, level 1, all attributes 0
+  const blank=blankWords();localStorage.setItem(wkey(id),JSON.stringify(blank));
+  localStorage.setItem(gkey(id),JSON.stringify({name:name,avatar:"🐼",accent:COLORS[0],xp:0,mastersEarned:0,reviews:0,bestStreak:0,sessionStreak:0,dayStreak:1,bestDayStreak:1,totalDays:1,lastDay:dayNum()}));
+  // give the new profile its own starter save file
+  const hdr=["hanzi","pinyin","bucket","hsk","freq","correct","incorrect","total","accuracy"];
+  const csv=[hdr.join(",")].concat(blank.map(w=>[w.hanzi,w.pinyin,w.bucket,w.hsk||"",w.freq||"",0,0,0,""].join(","))).join("\n");
+  downloadFile(csvName(id),csv);
+  switchProfile(id);toast("Created "+name+" — saved "+csvName(id));}
 function openProfiles(){
   document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal">
     <h3>Profiles</h3>
