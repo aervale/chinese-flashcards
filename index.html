@@ -320,9 +320,13 @@ function renderCard(rev){
   if(!current){host.innerHTML=`<div class="empty">${weakest?"🎉 No weak words — study some cards first!":"🎉 Nothing to study in this set!<br>Pick a bucket above (try Archive to learn new words)."}</div>`;return;}
   const c=current,a=acc(c);let front,back;
   const spk=`<button class="spk" data-spk="${c.hanzi}" title="Play audio">🔊</button>`;
-  if(dir==="char"){front=`<div class="han">${c.hanzi}</div>`;back=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.def)}</div>${sentHL(c)}`;}
+  if(c._cmp){
+    // Compound = writing practice: prompt with pinyin (+ meaning), reveal the characters only on flip.
+    front=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.def)}</div>`;
+    back=`<div class="han">${c.hanzi}</div>`;
+  }else if(dir==="char"){front=`<div class="han">${c.hanzi}</div>`;back=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.def)}</div>${sentHL(c)}`;}
   else{front=`<div class="prompt">${esc(c.def)}</div>`;back=`<div class="han">${c.hanzi}</div><div class="py">${esc(c.pinyin)} ${spk}</div>${sentHL(c)}`;}
-  const wstat=c._cmp?`compound · parts: ${c.parts.join(" + ")}`:`✓ ${c.correct} · ✕ ${c.wrong}${a!==null?` · ${a}%`:""} · ▲ ${c.streak||0}/${settings.promoteThreshold}`;
+  const wstat=c._cmp?`✍️ write the characters`:`✓ ${c.correct} · ✕ ${c.wrong}${a!==null?` · ${a}%`:""} · ▲ ${c.streak||0}/${settings.promoteThreshold}`;
   const meta=c._cmp?`<span class="badge b-bidaily">Compound</span>`:`<span class="badge b-${c.bucket.toLowerCase()}">${c.bucket}</span>${hsel(c)?`<span class="badge b-weekly">${hsel(c)}</span>`:""}`;
   host.innerHTML=`<div class="card" id="card">
     <div class="wstat">${wstat}</div>
