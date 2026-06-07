@@ -51,6 +51,9 @@ td.acc{font-weight:700;white-space:nowrap}
 .chip{padding:8px 15px;border-radius:22px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;font-size:13px;font-weight:700}
 .chip.on{border-color:var(--accent);color:var(--accent);background:var(--panel2)}
 .chip.weak.on{border-color:var(--red);color:var(--red)}
+.addnext{text-align:center;margin-bottom:16px}
+.addnext button{background:var(--accent);color:#fff;border:none;padding:9px 18px;border-radius:22px;font-weight:700;font-size:13px;cursor:pointer;box-shadow:var(--shadow)}
+.addnext button:hover{filter:brightness(1.06)}.addnext button:active{transform:scale(.97)}
 .study-wrap{max-width:640px;margin:0 auto;text-align:center}
 .progress{height:6px;background:var(--panel2);border-radius:3px;margin-bottom:16px;overflow:hidden}
 .progress>div{height:100%;background:var(--accent);width:0;transition:width .3s}
@@ -116,6 +119,7 @@ td.acc{font-weight:700;white-space:nowrap}
   <div class="dirwrap"><div class="seg" id="dirSeg">
     <button data-dir="char" class="on">汉字 → Meaning</button><button data-dir="term">Meaning → 汉字</button></div></div>
   <div class="study-bar" id="bucketChips"></div>
+  <div class="addnext"><button id="addNext">＋ Add next easiest word to Daily</button></div>
   <div class="study-wrap"><div class="progress"><div id="progBar"></div></div><div id="cardHost"></div></div>
 </section>
 <section id="browse" class="hidden">
@@ -257,6 +261,15 @@ function grade(ok){const c=current;
     if(c.streak>=settings.promoteThreshold){c.bucket=NEXT[c.bucket];c.streak=0;}}
   else{c.wrong++;c.streak=0;c.bucket=PREV[c.bucket];queue.push(c);}
   save();renderStats();renderChips();nextCard();}
+function addNextEasiest(){
+  const pool=words.filter(w=>w.bucket==="Archive");
+  if(!pool.length){toast("No words left in Archive");return;}
+  pool.sort((a,b)=>(a.freq??1e9)-(b.freq??1e9));
+  const w=pool[0];w.bucket="Daily";w.streak=0;
+  save();renderStats();renderChips();
+  if(!weakest&&activeBuckets.has("Daily")){buildQueue();if(!current)nextCard();}
+  toast(`Added ${w.hanzi} (${w.pinyin}) to Daily`);renderBrowse();
+}
 function openAdd(){document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal">
   <h3>Add new word</h3>
   <label>Character (汉字)</label><input id="m_han">
@@ -314,6 +327,8 @@ function openSettings(){document.getElementById("modalHost").innerHTML=`<div cla
     <label class="switch"><input type="checkbox" id="s_retmix" ${settings.retiredMix?"checked":""}><span class="slider"></span></label></div>
   <div class="setrow"><div><div class="t">Redistribute all words</div><div class="s">Move every word back to Daily so it's all studyable again (keeps your stats)</div></div>
     <button class="minib" id="s_redist">Restudy all</button></div>
+  <div class="setrow"><div><div class="t">Move all to Archive</div><div class="s">Clear everything into the backlog for a fresh start, then add words back as you go (keeps your stats)</div></div>
+    <button class="minib" id="s_archall">Archive all</button></div>
   <div class="setrow"><div><div class="t">Reset percentages</div><div class="s">Set every word's correct/missed back to 0 (keeps buckets)</div></div>
     <button class="minib danger" id="s_resetacc">Reset all</button></div>
   <div class="modal-btns"><button class="save-b" id="s_close">Done</button></div></div></div>`;
@@ -330,6 +345,8 @@ function openSettings(){document.getElementById("modalHost").innerHTML=`<div cla
   document.getElementById("s_retmix").onchange=e=>{settings.retiredMix=e.target.checked;saveSettings();buildQueue();};
   document.getElementById("s_redist").onclick=()=>{if(confirm("Move ALL words back to Daily so everything is studyable again? Your correct/missed stats are kept.")){
     words.forEach(w=>{w.bucket="Daily";w.streak=0;});save();renderStats();renderChips();weakest=false;activeBuckets=new Set(["Daily"]);renderChips();buildQueue();nextCard();renderBrowse();toast("All words moved to Daily");}};
+  document.getElementById("s_archall").onclick=()=>{if(confirm("Move ALL words into Archive for a fresh start? Your correct/missed stats are kept. Add words back with the “Add next easiest word” button.")){
+    words.forEach(w=>{w.bucket="Archive";w.streak=0;});save();renderStats();renderChips();weakest=false;activeBuckets=new Set(["Daily"]);renderChips();buildQueue();nextCard();renderBrowse();toast("All words moved to Archive");}};
   document.getElementById("s_resetacc").onclick=()=>{if(confirm("Reset correct/missed counts for ALL words to zero? Buckets are kept. This cannot be undone.")){
     words.forEach(w=>{w.correct=0;w.wrong=0;w.streak=0;});save();renderStats();renderChips();buildQueue();nextCard();renderBrowse();toast("All percentages reset");}};}
 function closeModal(){document.getElementById("modalHost").innerHTML="";}
@@ -359,6 +376,7 @@ document.addEventListener("click",e=>{const s=e.target.closest("[data-spk]");if(
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");
   const v=t.dataset.view;document.getElementById("study").classList.toggle("hidden",v!=="study");document.getElementById("browse").classList.toggle("hidden",v!=="browse");if(v==="browse")renderBrowse();});
 document.getElementById("gear").onclick=openSettings;
+document.getElementById("addNext").onclick=addNextEasiest;
 document.getElementById("dirSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;dir=b.dataset.dir;document.querySelectorAll("#dirSeg button").forEach(x=>x.classList.toggle("on",x===b));renderCard(false);};
 document.getElementById("bucketChips").onclick=e=>{const c=e.target.closest(".chip");if(!c)return;
   if(c.dataset.weak){weakest=!weakest;}
