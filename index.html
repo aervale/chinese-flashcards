@@ -268,7 +268,20 @@ function addNextEasiest(){
   const w=pool[0];w.bucket="Daily";w.streak=0;
   save();renderStats();renderChips();
   if(!weakest&&activeBuckets.has("Daily")){buildQueue();if(!current)nextCard();}
-  toast(`Added ${w.hanzi} (${w.pinyin}) to Daily`);renderBrowse();
+  renderBrowse();openIntro(w);
+}
+function openIntro(w){
+  document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal" style="text-align:center">
+    <div style="font-size:12px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:1px">✦ New word added to Daily</div>
+    <div style="font-size:72px;font-weight:600;margin:8px 0">${w.hanzi}</div>
+    <div style="color:var(--accent2);font-size:24px;font-weight:700">${esc(w.pinyin)} <button class="spk" data-spk="${w.hanzi}">🔊</button></div>
+    <div style="color:var(--muted);margin-top:10px;font-size:15px">${esc(w.def)}</div>
+    ${w.sent?`<div style="margin-top:14px;display:flex;justify-content:center">${sentHL(w)}</div>`:""}
+    <div style="font-size:12px;color:var(--muted);margin-top:12px">HSK ${w.hsk||"—"} · Frequency rank ${w.freq||"—"}</div>
+    <div class="modal-btns"><button class="save-b" id="i_ok">Start studying</button></div></div></div>`;
+  document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
+  document.getElementById("i_ok").onclick=closeModal;
+  speak(w.hanzi);
 }
 function openAdd(){document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal">
   <h3>Add new word</h3>
@@ -343,8 +356,8 @@ function openSettings(){document.getElementById("modalHost").innerHTML=`<div cla
   document.getElementById("s_thrup").onclick=()=>setThr(settings.promoteThreshold+1);
   document.getElementById("s_thrdn").onclick=()=>setThr(settings.promoteThreshold-1);
   document.getElementById("s_retmix").onchange=e=>{settings.retiredMix=e.target.checked;saveSettings();buildQueue();};
-  document.getElementById("s_redist").onclick=()=>{if(confirm("Move ALL words back to Daily so everything is studyable again? Your correct/missed stats are kept.")){
-    words.forEach(w=>{w.bucket="Daily";w.streak=0;});save();renderStats();renderChips();weakest=false;activeBuckets=new Set(["Daily"]);renderChips();buildQueue();nextCard();renderBrowse();toast("All words moved to Daily");}};
+  document.getElementById("s_redist").onclick=()=>{if(confirm("Move all active words (everything except Archive) back to Daily? Archived words stay in the backlog. Your stats are kept.")){
+    let n=0;words.forEach(w=>{if(w.bucket!=="Archive"){w.bucket="Daily";w.streak=0;n++;}});save();renderStats();renderChips();weakest=false;activeBuckets=new Set(["Daily"]);renderChips();buildQueue();nextCard();renderBrowse();toast(n+" words moved to Daily");}};
   document.getElementById("s_archall").onclick=()=>{if(confirm("Move ALL words into Archive for a fresh start? Your correct/missed stats are kept. Add words back with the “Add next easiest word” button.")){
     words.forEach(w=>{w.bucket="Archive";w.streak=0;});save();renderStats();renderChips();weakest=false;activeBuckets=new Set(["Daily"]);renderChips();buildQueue();nextCard();renderBrowse();toast("All words moved to Archive");}};
   document.getElementById("s_resetacc").onclick=()=>{if(confirm("Reset correct/missed counts for ALL words to zero? Buckets are kept. This cannot be undone.")){
