@@ -144,9 +144,9 @@ const PREV={Daily:"Daily",Bidaily:"Daily",Weekly:"Bidaily",Retired:"Weekly",Arch
 const KEY="chineseY2_v6", SKEY="chineseY2_settings";
 let saved=JSON.parse(localStorage.getItem(KEY)||"null");
 let words=(saved&&Array.isArray(saved))?saved:SEED.map(w=>({...w,wrong:0,correct:0}));
-words.forEach(w=>{w.wrong=w.wrong||0;w.correct=w.correct||0;});
+words.forEach(w=>{w.wrong=w.wrong||0;w.correct=w.correct||0;w.streak=w.streak||0;});
 function save(){localStorage.setItem(KEY,JSON.stringify(words));autosave();}
-let settings=Object.assign({theme:"light",autoplay:false,rate:0.9,onlineVoice:true},JSON.parse(localStorage.getItem(SKEY)||"{}"));
+let settings=Object.assign({theme:"light",autoplay:false,rate:0.9,onlineVoice:true,promoteThreshold:5,retiredMix:true},JSON.parse(localStorage.getItem(SKEY)||"{}"));
 function saveSettings(){localStorage.setItem(SKEY,JSON.stringify(settings));}
 function applyTheme(){document.body.classList.toggle("dark",settings.theme==="dark");}
 applyTheme();
@@ -209,6 +209,16 @@ function buildQueue(){
   }else{
     queue=words.filter(w=>activeBuckets.has(w.bucket));queue.sort((a,b)=>(b.wrong-a.wrong)+(Math.floor(rnd()*6)-3));
   }
+  // Sprinkle in some retired words for spaced review, regardless of the selected mode.
+  if(settings.retiredMix){
+    const inQ=new Set(queue);
+    const retired=words.filter(w=>w.bucket==="Retired"&&!inQ.has(w));
+    const n=Math.min(retired.length,Math.max(3,Math.round(queue.length*0.1)));
+    for(let i=0;i<n&&retired.length;i++){
+      const idx=Math.floor(rnd()*retired.length);const w=retired.splice(idx,1)[0];
+      queue.splice(Math.floor(rnd()*(queue.length+1)),0,w);
+    }
+  }
   startCount=queue.length;
 }
 function renderChips(){
@@ -227,7 +237,7 @@ function renderCard(rev){
   if(dir==="char"){front=`<div class="han">${c.hanzi}</div>`;back=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.def)}</div>${sentHL(c)}`;}
   else{front=`<div class="prompt">${esc(c.def)}</div>`;back=`<div class="han">${c.hanzi}</div><div class="py">${esc(c.pinyin)} ${spk}</div>${sentHL(c)}`;}
   host.innerHTML=`<div class="card" id="card">
-    <div class="wstat">✓ ${c.correct} · ✕ ${c.wrong}${a!==null?` · ${a}%`:""}</div>
+    <div class="wstat">✓ ${c.correct} · ✕ ${c.wrong}${a!==null?` · ${a}%`:""} · ▲ ${c.streak||0}/${settings.promoteThreshold}</div>
     <div class="meta"><span class="badge b-${c.bucket.toLowerCase()}">${c.bucket}</span>${hsel(c)?`<span class="badge b-weekly">${hsel(c)}</span>`:""}</div>
     ${front}${rev?back:`<div class="hint">tap to reveal</div>`}</div>
     <div class="ctrlbar">
@@ -242,7 +252,11 @@ function renderCard(rev){
   if(rev){document.getElementById("bRight").onclick=()=>grade(true);document.getElementById("bWrong").onclick=()=>grade(false);
     if(settings.autoplay)speak(c.hanzi);}
 }
-function grade(ok){if(ok){current.correct++;if(!weakest)current.bucket=NEXT[current.bucket];}else{current.wrong++;if(!weakest)current.bucket=PREV[current.bucket];queue.push(current);}save();renderStats();renderChips();nextCard();}
+function grade(ok){const c=current;
+  if(ok){c.correct++;c.streak=(c.streak||0)+1;
+    if(c.streak>=settings.promoteThreshold){c.bucket=NEXT[c.bucket];c.streak=0;}}
+  else{c.wrong++;c.streak=0;c.bucket=PREV[c.bucket];queue.push(c);}
+  save();renderStats();renderChips();nextCard();}
 function openAdd(){document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal">
   <h3>Add new word</h3>
   <label>Character (汉字)</label><input id="m_han">
@@ -294,7 +308,13 @@ function openSettings(){document.getElementById("modalHost").innerHTML=`<div cla
   <div class="setrow"><div><div class="t">Test pronunciation</div><div class="s">Tap to hear 你好 (nǐ hǎo)</div></div><button class="spk" data-spk="你好">🔊</button></div>
   <div class="setrow"><div><div class="t">Progress file</div><div class="s">Save / load your accuracy data (progress.csv)</div></div>
     <div style="display:flex;gap:6px"><button class="minib" id="s_save">Save</button><button class="minib" id="s_load">Load</button></div></div>
-  <div class="setrow"><div><div class="t">Reset accuracies</div><div class="s">Set every word's correct/missed back to 0 (keeps buckets)</div></div>
+  <div class="setrow"><div><div class="t">Correct answers to advance</div><div class="s">Right this many times in a row to move a word toward Retired (a miss moves it back one level)</div></div>
+    <div style="display:flex;align-items:center;gap:8px"><button class="minib" id="s_thrdn">−</button><b id="thrLbl" style="min-width:18px;text-align:center">${settings.promoteThreshold}</b><button class="minib" id="s_thrup">+</button></div></div>
+  <div class="setrow"><div><div class="t">Mix in retired words</div><div class="s">Occasionally show retired words in any mode so they stay fresh</div></div>
+    <label class="switch"><input type="checkbox" id="s_retmix" ${settings.retiredMix?"checked":""}><span class="slider"></span></label></div>
+  <div class="setrow"><div><div class="t">Redistribute all words</div><div class="s">Move every word back to Daily so it's all studyable again (keeps your stats)</div></div>
+    <button class="minib" id="s_redist">Restudy all</button></div>
+  <div class="setrow"><div><div class="t">Reset percentages</div><div class="s">Set every word's correct/missed back to 0 (keeps buckets)</div></div>
     <button class="minib danger" id="s_resetacc">Reset all</button></div>
   <div class="modal-btns"><button class="save-b" id="s_close">Done</button></div></div></div>`;
   document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
@@ -304,8 +324,14 @@ function openSettings(){document.getElementById("modalHost").innerHTML=`<div cla
   document.getElementById("s_auto").onchange=e=>{settings.autoplay=e.target.checked;saveSettings();};
   document.getElementById("s_rate").oninput=e=>{settings.rate=+e.target.value;saveSettings();document.getElementById("rateLbl").textContent=settings.rate.toFixed(1)+"×";};
   document.getElementById("s_save").onclick=saveProgress;document.getElementById("s_load").onclick=loadProgress;
+  const setThr=v=>{settings.promoteThreshold=Math.max(1,Math.min(20,v));saveSettings();document.getElementById("thrLbl").textContent=settings.promoteThreshold;renderCard(!!document.getElementById("bRight"));};
+  document.getElementById("s_thrup").onclick=()=>setThr(settings.promoteThreshold+1);
+  document.getElementById("s_thrdn").onclick=()=>setThr(settings.promoteThreshold-1);
+  document.getElementById("s_retmix").onchange=e=>{settings.retiredMix=e.target.checked;saveSettings();buildQueue();};
+  document.getElementById("s_redist").onclick=()=>{if(confirm("Move ALL words back to Daily so everything is studyable again? Your correct/missed stats are kept.")){
+    words.forEach(w=>{w.bucket="Daily";w.streak=0;});save();renderStats();renderChips();weakest=false;activeBuckets=new Set(["Daily"]);renderChips();buildQueue();nextCard();renderBrowse();toast("All words moved to Daily");}};
   document.getElementById("s_resetacc").onclick=()=>{if(confirm("Reset correct/missed counts for ALL words to zero? Buckets are kept. This cannot be undone.")){
-    words.forEach(w=>{w.correct=0;w.wrong=0;});save();renderStats();renderChips();buildQueue();nextCard();renderBrowse();toast("All accuracies reset");}};}
+    words.forEach(w=>{w.correct=0;w.wrong=0;w.streak=0;});save();renderStats();renderChips();buildQueue();nextCard();renderBrowse();toast("All percentages reset");}};}
 function closeModal(){document.getElementById("modalHost").innerHTML="";}
 // ---------- progress file ----------
 function progressCSV(){const e=s=>`"${String(s).replace(/"/g,'""')}"`;
