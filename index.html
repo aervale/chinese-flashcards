@@ -89,8 +89,13 @@ td.acc{font-weight:700;white-space:nowrap}
 @keyframes luPop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
 @keyframes luSpin{0%{transform:scale(0) rotate(-180deg)}60%{transform:scale(1.35) rotate(18deg)}100%{transform:scale(1) rotate(0)}}
 .confetti{position:fixed;top:-16px;width:9px;height:14px;border-radius:2px;opacity:.95;z-index:89;animation-name:confFall;animation-timing-function:linear;animation-fill-mode:forwards}
+.confetti.big{width:12px;height:18px}
 @keyframes confFall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(104vh) rotate(900deg);opacity:.85}}
-@media(prefers-reduced-motion:reduce){.confetti{display:none}.lu-card,.lu-burst{animation:none}}
+.levelup.milestone .lu-card{border-color:var(--yellow);box-shadow:0 0 0 4px rgba(255,205,31,.18),0 18px 70px rgba(0,0,0,.5)}
+.levelup.milestone .lu-title{color:var(--yellow)}
+.levelup.milestone .lu-lv{font-size:50px}
+.masterpop{position:fixed;top:32%;left:50%;transform:translateX(-50%);background:var(--accent2);color:#1b2430;font-weight:900;font-size:19px;padding:10px 24px;border-radius:30px;box-shadow:0 10px 36px rgba(0,0,0,.35);z-index:90;animation:luPop .4s cubic-bezier(.2,1.5,.4,1)}
+@media(prefers-reduced-motion:reduce){.confetti{display:none}.lu-card,.lu-burst,.masterpop{animation:none}}
 .study-wrap{max-width:640px;margin:0 auto;text-align:center}
 .progress{height:6px;background:var(--panel2);border-radius:3px;margin-bottom:16px;overflow:hidden}
 .progress>div{height:100%;background:var(--accent);width:0;transition:width .3s}
@@ -457,24 +462,43 @@ function grade(ok){const c=current;let mastered=0;
   saveGame();save();renderStats();renderChips();renderCharacter();
   reactGrade(ok,gained,mastered);
   if(lvAfter>lvBefore)levelUp(lvAfter);
+  else if(mastered>0)masterCelebrate(mastered);
   nextCard();}
+function confettiBurst(n,big){
+  const fx=document.getElementById("fx");
+  for(let i=0;i<n;i++){const cf=document.createElement("div");cf.className="confetti"+(big?" big":"");
+    cf.style.left=(Math.random()*100)+"%";cf.style.background=(big&&i%3===0)?"var(--yellow)":COLORS[i%COLORS.length];
+    cf.style.animationDelay=(Math.random()*0.5).toFixed(2)+"s";cf.style.animationDuration=(1.9+Math.random()*1.3).toFixed(2)+"s";
+    fx.appendChild(cf);}
+}
 function levelUp(lv){
+  const milestone=lv%10===0;
   const title=TITLES[Math.min(TITLES.length-1,Math.floor((lv-1)/3))];
   const fx=document.getElementById("fx");
-  const b=document.createElement("div");b.className="levelup";
-  b.innerHTML=`<div class="lu-card"><div class="lu-burst">${game.avatar}</div><div class="lu-title">LEVEL UP!</div><div class="lu-lv">Level ${lv}</div><div class="lu-sub">${title}</div></div>`;
+  const b=document.createElement("div");b.className="levelup"+(milestone?" milestone":"");
+  b.innerHTML=`<div class="lu-card"><div class="lu-burst">${milestone?"🏆":game.avatar}</div>
+    <div class="lu-title">${milestone?"✦ MILESTONE ✦":"LEVEL UP!"}</div>
+    <div class="lu-lv">Level ${lv}</div><div class="lu-sub">${title}${milestone?" — a new rank!":""}</div></div>`;
   fx.appendChild(b);
-  for(let i=0;i<54;i++){const cf=document.createElement("div");cf.className="confetti";
-    cf.style.left=(Math.random()*100)+"%";cf.style.background=COLORS[i%COLORS.length];
-    cf.style.animationDelay=(Math.random()*0.5).toFixed(2)+"s";cf.style.animationDuration=(1.9+Math.random()*1.2).toFixed(2)+"s";
-    fx.appendChild(cf);}
-  chime();
-  setTimeout(()=>{b.remove();fx.querySelectorAll(".confetti").forEach(x=>x.remove());},2800);
+  confettiBurst(milestone?120:54,milestone);
+  chime(milestone);
+  setTimeout(()=>{b.remove();fx.querySelectorAll(".confetti").forEach(x=>x.remove());},milestone?4000:2800);
 }
-function chime(){try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const a=new A();const now=a.currentTime;
-  [523.25,659.25,783.99,1046.5].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.type="triangle";o.frequency.value=f;
-    o.connect(g);g.connect(a.destination);const t=now+i*0.1;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.22,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);o.start(t);o.stop(t+0.32);});
-  setTimeout(()=>{try{a.close();}catch(e){}},1400);}catch(e){}}
+function masterCelebrate(n){
+  const fx=document.getElementById("fx");
+  const b=document.createElement("div");b.className="masterpop";
+  b.textContent=(n>1?n+" words mastered!":"⭐ Word mastered!");
+  fx.appendChild(b);
+  confettiBurst(20,false);
+  chime(false,true);
+  setTimeout(()=>{b.remove();fx.querySelectorAll(".confetti").forEach(x=>x.remove());},1700);
+}
+function chime(grand,soft){try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const a=new A();const now=a.currentTime;
+  const notes=soft?[659.25,987.77]:grand?[523.25,659.25,783.99,1046.5,1318.5,1568]:[523.25,659.25,783.99,1046.5];
+  const step=soft?0.08:0.1, peak=soft?0.16:0.22;
+  notes.forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.type=grand?"sawtooth":"triangle";o.frequency.value=f;
+    o.connect(g);g.connect(a.destination);const t=now+i*step;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);o.start(t);o.stop(t+0.32);});
+  setTimeout(()=>{try{a.close();}catch(e){}},1800);}catch(e){}}
 function addNextEasiest(){
   const pool=words.filter(w=>w.bucket==="Archive"&&!skipPool.has(w.hanzi));
   if(!pool.length){toast(skipPool.size?"No more words to add (all remaining were skipped)":"No words left in Archive");return;}
