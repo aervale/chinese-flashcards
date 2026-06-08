@@ -408,6 +408,7 @@ function wordByHanzi(h){return words.find(w=>w.hanzi===h);}
 function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;}
 function studySet(){return (game&&Array.isArray(game.set))?game.set:[];}
 function topFreq(n){return words.slice().sort((a,b)=>(a.freq??1e9)-(b.freq??1e9)).slice(0,n).map(w=>w.hanzi);}
+function markDecked(arr){const s=new Set(game.decked||[]);arr.forEach(h=>s.add(h));game.decked=Array.from(s);}
 function buildQueue(){
   // Study only the words in the saved practice set (a chosen subsection).
   const setHas=new Set(studySet());
@@ -455,10 +456,12 @@ function openDeck(){
     let pool;
     if(deckWeak){pool=words.filter(w=>(w.correct+w.wrong)>0).sort((a,b)=>acc(a)-acc(b)||b.wrong-a.wrong);}
     else{pool=words.filter(w=>deckSrc.has(w.bucket));
-      // prioritize low-percentage words; unstudied fall back to frequency (most common first)
-      pool.sort((a,b)=>{const aa=acc(a)===null?100:acc(a),ab=acc(b)===null?100:acc(b);return aa-ab||(b.wrong-a.wrong)||((a.freq??1e9)-(b.freq??1e9));});}
+      const decked=new Set(game.decked||[]);
+      // never-decked words first, then low-percentage, then most common
+      pool.sort((a,b)=>{const da=decked.has(a.hanzi)?1:0,db=decked.has(b.hanzi)?1:0;if(da!==db)return da-db;
+        const aa=acc(a)===null?100:acc(a),ab=acc(b)===null?100:acc(b);return aa-ab||(b.wrong-a.wrong)||((a.freq??1e9)-(b.freq??1e9));});}
     if(!pool.length){toast(deckWeak?"No studied words yet — study some first":"Those batches have no words");return;}
-    game.set=pool.slice(0,deckSize).map(w=>w.hanzi);game.deckSec=0;saveGame();
+    game.set=pool.slice(0,deckSize).map(w=>w.hanzi);game.deckSec=0;markDecked(game.set);saveGame();
     buildQueue();nextCard();closeModal();renderDeckBar();toast("Deck: "+game.set.length+" words");};
 }
 function openAddWords(){
@@ -479,7 +482,7 @@ function openAddWords(){
     if(!pool.length){toast("No words left in Archive");return;}
     const chosen=pool.slice(0,addCount);
     if(!Array.isArray(game.set))game.set=[];
-    chosen.forEach(w=>{w.bucket="Daily";w.streak=0;if(!game.set.includes(w.hanzi))game.set.push(w.hanzi);});
+    chosen.forEach(w=>{w.bucket="Daily";w.streak=0;if(!game.set.includes(w.hanzi))game.set.push(w.hanzi);});markDecked(chosen.map(w=>w.hanzi));
     saveGame();save();renderStats();renderDeckBar();buildQueue();if(!current)nextCard();renderBrowse();closeModal();
     if(addShow)showNewWords(chosen);else toast("Added "+chosen.length+" words to Learning");};
 }
@@ -497,7 +500,7 @@ function showNewWords(list){
 }
 function resetSet(){
   if(confirm("Reset your deck back to the default — the 10 most common words? Your word levels and stats are kept.")){
-    game.set=topFreq(10);game.deckSec=0;saveGame();buildQueue();nextCard();renderDeckBar();toast("Deck reset to the 10 most common words");}}
+    game.set=topFreq(10);game.deckSec=0;markDecked(game.set);saveGame();buildQueue();nextCard();renderDeckBar();toast("Deck reset to the 10 most common words");}}
 function nextCard(){
   if(!queue.length&&studySet().length)buildQueue(); // loop through the practice set
   current=queue.shift()||null;renderCard(false);
@@ -544,9 +547,9 @@ function applyAnswer(w,ok){
 function grade(ok){const c=current;let mastered=0;
   if(c._cmp){c.parts.forEach(ch=>{const w=wordByHanzi(ch);if(w&&applyAnswer(w,ok))mastered++;});if(!ok)queue.push(c);}
   else{if(applyAnswer(c,ok))mastered++;if(!ok)queue.push(c);}
-  const gained=(ok?(c._cmp?15:10):2)+mastered*50;
+  const gained=ok?((c._cmp?15:10)+mastered*50):-10; // miss costs 10 XP (≈ one correct answer)
   const lvBefore=levelInfo(game.xp).level;
-  game.xp+=gained;game.reviews=(game.reviews||0)+1;game.mastersEarned=(game.mastersEarned||0)+mastered;
+  game.xp=Math.max(0,game.xp+gained);game.reviews=(game.reviews||0)+1;game.mastersEarned=(game.mastersEarned||0)+mastered;
   const lvAfter=levelInfo(game.xp).level;
   if(ok){game.sessionStreak=(game.sessionStreak||0)+1;if(game.sessionStreak>(game.bestStreak||0))game.bestStreak=game.sessionStreak;}
   else game.sessionStreak=0;
@@ -831,6 +834,7 @@ function initGame(){
   game=Object.assign({name:"Scholar",avatar:"🐼",accent:COLORS[0],xp:0,mastersEarned:0,reviews:0,bestStreak:0,sessionStreak:0,dayStreak:1,bestDayStreak:1,totalDays:1,lastDay:dayNum()},game);
   if(!hadMasters)game.mastersEarned=masteredCount();
   if(!Array.isArray(game.set)||!game.set.length)game.set=topFreq(10); // default deck: 10 most common words
+  if(!Array.isArray(game.decked))game.decked=(game.set||[]).slice(); // words ever placed in a deck
   if(game.accent==="#4255ff")game.accent=COLORS[0]; // migrate off old default blue
   const t=dayNum();
   if(game.lastDay!==t){const diff=t-game.lastDay;game.dayStreak=diff===1?(game.dayStreak||0)+1:1;game.totalDays=(game.totalDays||0)+1;game.lastDay=t;}
@@ -901,7 +905,7 @@ function createProfile(){const name=(prompt("New profile name:","Player "+(profi
   top.forEach(w=>w.bucket="Daily");
   const startSet=top.map(w=>w.hanzi);
   localStorage.setItem(wkey(id),JSON.stringify(blank));
-  localStorage.setItem(gkey(id),JSON.stringify({name:name,avatar:"🐼",accent:COLORS[0],xp:0,mastersEarned:0,reviews:0,bestStreak:0,sessionStreak:0,dayStreak:1,bestDayStreak:1,totalDays:1,lastDay:dayNum(),set:startSet}));
+  localStorage.setItem(gkey(id),JSON.stringify({name:name,avatar:"🐼",accent:COLORS[0],xp:0,mastersEarned:0,reviews:0,bestStreak:0,sessionStreak:0,dayStreak:1,bestDayStreak:1,totalDays:1,lastDay:dayNum(),set:startSet,decked:startSet.slice()}));
   // give the new profile its own starter save file
   const hdr=["hanzi","pinyin","bucket","hsk","freq","correct","incorrect","total","accuracy"];
   const csv=[hdr.join(",")].concat(blank.map(w=>[w.hanzi,w.pinyin,w.bucket,w.hsk||"",w.freq||"",0,0,0,""].join(","))).join("\n");
