@@ -613,7 +613,9 @@ function openSettings(){document.getElementById("modalHost").innerHTML=`<div cla
 function closeModal(){document.getElementById("modalHost").innerHTML="";}
 // ---------- progress file ----------
 function progressCSV(){const e=s=>`"${String(s).replace(/"/g,'""')}"`;
-  const rows=[["hanzi","pinyin","bucket","hsk","freq","correct","incorrect","total","accuracy"].map(e).join(",")];
+  const rows=[];
+  if(game)rows.push("# chineseY2-stats: "+JSON.stringify(game)); // profile stats (level, XP, attributes, streaks, deck)
+  rows.push(["hanzi","pinyin","bucket","hsk","freq","correct","incorrect","total","accuracy"].map(e).join(","));
   words.forEach(w=>{const t=w.correct+w.wrong;rows.push([w.hanzi,w.pinyin,w.bucket,w.hsk||"",w.freq||"",w.correct,w.wrong,t,t?Math.round(100*w.correct/t):""].map(e).join(","));});
   return rows.join("\n");}
 let fileHandles={};
@@ -628,11 +630,18 @@ async function saveProgress(){const csv=progressCSV();const fn=csvName();
 async function autosave(){const h=fileHandles[activeId];if(h){try{const ws=await h.createWritable();await ws.write(progressCSV());await ws.close();}catch(e){}}}
 function loadProgress(){const inp=document.createElement("input");inp.type="file";inp.accept=".csv";
   inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();
-    r.onload=()=>{try{applyCSV(r.result);save();renderStats();renderChips();buildQueue();nextCard();renderBrowse();closeModal();toast("Progress loaded");}catch(e){alert("Could not read file");}};r.readAsText(f);};inp.click();}
-function applyCSV(text){const lines=text.split(/\r?\n/).filter(l=>l.trim());const hdr=parseCSVLine(lines[0]).map(h=>h.toLowerCase());
+    r.onload=()=>{try{const loadedStats=applyCSV(r.result);save();saveGame();applyAccent();renderStats();renderChips();renderCharacter();buildQueue();nextCard();renderBrowse();closeModal();toast(loadedStats?"Loaded vocab + profile stats":"Vocab loaded (no stats in file)");}catch(e){alert("Could not read file");}};r.readAsText(f);};inp.click();}
+function applyCSV(text){const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  // restore profile stats if the file carries them
+  let loadedStats=false;const sl=lines.find(l=>l.startsWith("# chineseY2-stats:"));
+  if(sl){const j=sl.indexOf("{");if(j>=0){try{const st=JSON.parse(sl.slice(j));if(st&&typeof st==="object"){game=Object.assign(game||{},st);loadedStats=true;}}catch(e){}}}
+  // header = first line whose first cell is "hanzi"
+  let hi=lines.findIndex(l=>(parseCSVLine(l)[0]||"").toLowerCase()==="hanzi");if(hi<0)hi=0;
+  const hdr=parseCSVLine(lines[hi]).map(h=>h.toLowerCase());
   const ci=n=>hdr.indexOf(n);const map={};words.forEach(w=>map[w.hanzi]=w);
-  for(let i=1;i<lines.length;i++){const c=parseCSVLine(lines[i]);const w=map[c[ci("hanzi")]];if(!w)continue;
-    w.correct=+c[ci("correct")]||0;w.wrong=+c[ci("incorrect")]||0;const b=c[ci("bucket")];if(BUCKETS.includes(b))w.bucket=b;}}
+  for(let i=hi+1;i<lines.length;i++){if(lines[i].startsWith("#"))continue;const c=parseCSVLine(lines[i]);const w=map[c[ci("hanzi")]];if(!w)continue;
+    w.correct=+c[ci("correct")]||0;w.wrong=+c[ci("incorrect")]||0;const b=c[ci("bucket")];if(BUCKETS.includes(b))w.bucket=b;}
+  return loadedStats;}
 function parseCSVLine(l){const out=[];let cur="",q=false;for(let i=0;i<l.length;i++){const ch=l[i];
   if(q){if(ch=='"'){if(l[i+1]=='"'){cur+='"';i++;}else q=false;}else cur+=ch;}
   else{if(ch=='"')q=true;else if(ch==',') {out.push(cur);cur="";}else cur+=ch;}}out.push(cur);return out;}
