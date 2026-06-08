@@ -235,12 +235,16 @@ main{flex:1;max-width:1040px;margin:0 auto;padding:22px 26px}
 .scontent select{width:auto;min-width:110px}
 .dtimer{white-space:nowrap}.dtimer b{color:var(--text);font-variant-numeric:tabular-nums}
 .tsep{color:var(--line)}
+.card .pybig{font-size:52px;font-weight:600;color:var(--accent2);line-height:1.1;letter-spacing:1px}
+#sideHandle{flex:0 0 7px;align-self:stretch;cursor:col-resize;background:transparent}
+#sideHandle:hover,#sideHandle.drag{background:var(--accent)}
+@media(max-width:900px){#sideHandle{display:none}}
 </style></head><body>
 <header><h1><span class="flag">🇨🇳</span> Chinese Flashcards</h1>
 <div class="tabs"><button class="tab active" data-view="study">Study</button><button class="tab" data-view="read">Read</button><button class="tab" data-view="browse">Browse</button></div>
 <button class="gear" id="gear" title="Settings">Settings</button></header>
 <div class="layout">
-<aside id="sidebar"></aside>
+<aside id="sidebar"></aside><div id="sideHandle" title="Drag to resize"></div>
 <main>
 <div class="statbar" id="stats"></div>
 <section id="study">
@@ -249,7 +253,6 @@ main{flex:1;max-width:1040px;margin:0 auto;padding:22px 26px}
     <button class="setbtn" id="openDeck">Build deck</button>
     <button class="setbtn ghost" id="openAdd">Add words</button>
   </div>
-  <div id="deckStatus"></div>
   <div class="study-wrap"><div class="progress"><div id="progBar"></div></div><div id="cardHost"></div></div>
 </section>
 <section id="browse" class="hidden">
@@ -275,7 +278,6 @@ main{flex:1;max-width:1040px;margin:0 auto;padding:22px 26px}
   <div class="read-pane" id="readPane"></div>
   <div class="readsrc" id="readSrc"></div>
 </section>
-<div class="foot"><span class="link" id="saveProg">Save progress to file</span><span class="link" id="resetAll">Reset all progress</span></div>
 </main>
 </div>
 <div id="modalHost"></div><div id="toast"></div><div id="fx"></div><div id="rtip"></div>
@@ -310,7 +312,8 @@ function loadWords(){let s=JSON.parse(localStorage.getItem(wkey())||"null");
   return w;}
 let words=loadWords();
 function save(){localStorage.setItem(wkey(),JSON.stringify(words));autosave();}
-let settings=Object.assign({theme:"light",autoplay:false,rate:0.9,onlineVoice:true,promoteThreshold:5,retiredMix:true,quizCompounds:false,readDiff:2,readLen:"any",cmpMax:2},JSON.parse(localStorage.getItem(SKEY)||"{}"));
+let settings=Object.assign({theme:"light",autoplay:true,rate:0.9,onlineVoice:true,promoteThreshold:5,retiredMix:true,quizCompounds:false,readDiff:2,readLen:"any",cmpMax:2,sideWidth:0},JSON.parse(localStorage.getItem(SKEY)||"{}"));
+if(!settings.apMigrated){settings.autoplay=true;settings.apMigrated=true;localStorage.setItem(SKEY,JSON.stringify(settings));}
 function saveSettings(){localStorage.setItem(SKEY,JSON.stringify(settings));}
 function applyTheme(){document.body.classList.toggle("dark",settings.theme==="dark");}
 applyTheme();
@@ -396,17 +399,7 @@ function updateTimer(){const el=document.getElementById("deckTimer");if(el)el.te
 let deckTick=null;
 function startDeckTimer(){if(deckTick)clearInterval(deckTick);
   deckTick=setInterval(()=>{if(!document.getElementById("study").classList.contains("hidden")&&!game.deckTimerHidden&&studySet().length){game.deckSec=(game.deckSec||0)+1;saveGame();updateTimer();}},1000);}
-function renderDeckBar(){
-  const cur=studySet().length;
-  const timer=game.deckTimerHidden?`<button class="setlink" id="timerShow" title="Show the deck timer">🕐 timer</button>`
-    :`<span class="dtimer">🕐 <b id="deckTimer">${fmtTime(game.deckSec)}</b> <button class="setlink" id="timerReset">reset</button> <button class="setlink" id="timerX" title="Hide timer">✕</button></span>`;
-  const status=cur?`Studying <b>${cur}</b> words · <button class="setlink reset" id="deckReset">reset deck</button>`:`No deck yet — tap "Build deck" to choose your words`;
-  document.getElementById("deckStatus").innerHTML=status+`<span class="tsep"> · </span>`+timer;
-  const r=document.getElementById("deckReset");if(r)r.onclick=resetSet;
-  const tr=document.getElementById("timerReset");if(tr)tr.onclick=()=>{game.deckSec=0;saveGame();updateTimer();};
-  const tx=document.getElementById("timerX");if(tx)tx.onclick=()=>{game.deckTimerHidden=true;saveGame();renderDeckBar();};
-  const ts=document.getElementById("timerShow");if(ts)ts.onclick=()=>{game.deckTimerHidden=false;saveGame();renderDeckBar();};
-}
+function renderDeckBar(){const di=document.getElementById("setDeckInfo");if(di)di.textContent=studySet().length+" words in your deck";updateTimer();}
 let deckSrc=new Set(["Daily","Bidaily"]),deckSize=50,deckWeak=false,addCount=10,addShow=true;
 function openDeck(){
   document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal">
@@ -485,7 +478,7 @@ function renderCard(rev){
     front=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.def)}</div>`;
     back=`<div class="han">${c.hanzi}</div>`;
   }else if(dir==="char"){front=`<div class="han">${c.hanzi}</div>`;back=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.defh||c.def)}</div>${sentHL(c)}`;}
-  else{front=`<div class="prompt">${esc(c.def)}</div>`;back=`<div class="han">${c.hanzi}</div><div class="py">${esc(c.pinyin)} ${spk}</div>${sentHL(c)}`;}
+  else{front=`<div class="pybig">${esc(c.pinyin)}</div><div class="def">${esc(c.def)}</div>`;back=`<div class="han">${c.hanzi}</div><div class="py">${esc(c.pinyin)} ${spk}</div>${sentHL(c)}`;}
   const wstat=c._cmp?`write the characters`:`✓ ${c.correct} · ✕ ${c.wrong}${a!==null?` · ${a}%`:""} · ▲ ${c.streak||0}/${settings.promoteThreshold}`;
   const meta=c._cmp?`<span class="badge b-bidaily">Compound</span>`:`<span class="badge b-${c.bucket.toLowerCase()}">${BLABEL[c.bucket]}</span>${hsel(c)?`<span class="badge b-weekly">${hsel(c)}</span>`:""}`;
   host.innerHTML=`<div class="card" id="card">
@@ -500,8 +493,8 @@ function renderCard(rev){
   document.getElementById("card").onclick=e=>{if(e.target.closest("[data-spk]"))return;if(!rev)renderCard(true);};
   document.getElementById("bAudio").onclick=()=>speak(c.hanzi);
   document.getElementById("bSkip").onclick=()=>{queue.push(current);nextCard();};
-  if(rev){document.getElementById("bRight").onclick=()=>grade(true);document.getElementById("bWrong").onclick=()=>grade(false);
-    if(settings.autoplay)speak(c.hanzi);}
+  if(!rev&&settings.autoplay)speak(c.hanzi); // auto-play audio when a new card appears
+  if(rev){document.getElementById("bRight").onclick=()=>grade(true);document.getElementById("bWrong").onclick=()=>grade(false);}
 }
 function applyAnswer(w,ok){
   const was=w.bucket;
@@ -643,6 +636,10 @@ function openSettings(cat){settingsCat=cat||settingsCat||"Visual";cat=settingsCa
     <div class="setrow"><div><div class="t">Text length</div><div class="s">How long the reading passages should be</div></div>
       <select id="s_readlen">${[["any","Any"],["short","Short"],["medium","Medium"],["long","Long"]].map(o=>`<option value="${o[0]}" ${settings.readLen===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></div>`;}
   else if(cat==="Study"){b=`
+    <div class="setrow"><div><div class="t">Current deck</div><div class="s" id="setDeckInfo">${studySet().length} words in your deck</div></div>
+      <button class="minib" id="s_resetdeck">Reset deck</button></div>
+    <div class="setrow"><div><div class="t">Time on this deck</div><div class="s">⏱ <b id="deckTimer">${fmtTime(game.deckSec)}</b></div></div>
+      <button class="minib" id="s_timerreset">Reset timer</button></div>
     <div class="setrow"><div><div class="t">Correct answers to advance</div><div class="s">Right this many in a row to move a word toward Mastered (a miss moves it back a level)</div></div>
       <div style="display:flex;align-items:center;gap:8px"><button class="minib" id="s_thrdn">−</button><b id="thrLbl" style="min-width:18px;text-align:center">${settings.promoteThreshold}</b><button class="minib" id="s_thrup">+</button></div></div>
     <div class="setrow"><div><div class="t">Mix in retired words</div><div class="s">Occasionally show mastered words so they stay fresh</div></div>
@@ -656,7 +653,9 @@ function openSettings(cat){settingsCat=cat||settingsCat||"Visual";cat=settingsCa
     <div class="setrow"><div><div class="t">Move all to Archive</div><div class="s">Clear everything into the backlog for a fresh start (keeps your stats)</div></div>
       <button class="minib" id="s_archall">Archive all</button></div>
     <div class="setrow"><div><div class="t">Reset percentages</div><div class="s">Set every word's correct/missed back to 0 (keeps buckets)</div></div>
-      <button class="minib danger" id="s_resetacc">Reset all</button></div>`;}
+      <button class="minib danger" id="s_resetacc">Reset all</button></div>
+    <div class="setrow"><div><div class="t">Reset all progress</div><div class="s">Restore buckets and scores to the original sheet import (added words kept)</div></div>
+      <button class="minib danger" id="s_resetall">Reset</button></div>`;}
   else if(cat==="Save"){b=`
     <div class="setrow"><div><div class="t">Progress file</div><div class="s">Save / load this profile (vocab + stats)</div></div>
       <div style="display:flex;gap:6px"><button class="minib" id="s_save">Save</button><button class="minib" id="s_load">Load</button></div></div>
@@ -695,7 +694,10 @@ function openSettings(cat){settingsCat=cat||settingsCat||"Visual";cat=settingsCa
     words.forEach(w=>{w.bucket="Archive";w.streak=0;});save();renderStats();renderChips();buildQueue();nextCard();renderBrowse();toast("All words moved to Archive");}});
   on("s_resetacc","onclick",()=>{if(confirm("Reset correct/missed counts for ALL words to zero? Buckets are kept. This cannot be undone.")){
     words.forEach(w=>{w.correct=0;w.wrong=0;w.streak=0;});save();renderStats();renderChips();buildQueue();nextCard();renderBrowse();toast("All percentages reset");}});
-  on("s_profiles","onclick",openProfiles);on("s_stats","onclick",openStats);}
+  on("s_profiles","onclick",openProfiles);on("s_stats","onclick",openStats);
+  on("s_resetdeck","onclick",resetSet);
+  on("s_timerreset","onclick",()=>{game.deckSec=0;saveGame();updateTimer();});
+  on("s_resetall","onclick",resetAllProgress);}
 function closeModal(){document.getElementById("modalHost").innerHTML="";}
 // ---------- progress file ----------
 function progressCSV(){const e=s=>`"${String(s).replace(/"/g,'""')}"`;
@@ -761,11 +763,11 @@ document.getElementById("openAdd").onclick=openAddWords;
 ["search","fBucket","fHsk"].forEach(id=>document.getElementById(id).oninput=renderBrowse);
 document.querySelectorAll("th[data-sort]").forEach(th=>th.onclick=()=>{const k=th.dataset.sort;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}renderBrowse();});
 document.getElementById("tbody").onclick=e=>{if(e.target.closest("[data-spk]"))return;const tr=e.target.closest("tr");if(tr&&tr.dataset.h)openDetail(tr.dataset.h);};
-document.getElementById("addBtn").onclick=openAdd;document.getElementById("saveProg").onclick=saveProgress;
-document.getElementById("resetAll").onclick=()=>{if(confirm("Reset buckets AND scores to the original sheet import? (Added words kept.)")){
+document.getElementById("addBtn").onclick=openAdd;
+function resetAllProgress(){if(confirm("Reset buckets AND scores to the original sheet import? (Added words kept.)")){
   const added=words.filter(w=>!SEED.some(s=>s.hanzi===w.hanzi));
   words=SEED.map(w=>({...w,wrong:0,correct:0})).concat(added.map(w=>({...w,wrong:0,correct:0})));
-  save();renderStats();renderChips();buildQueue();nextCard();renderBrowse();}};
+  save();renderStats();renderChips();buildQueue();nextCard();renderBrowse();}}
 document.addEventListener("keydown",e=>{if(document.getElementById("study").classList.contains("hidden"))return;if(document.getElementById("modalHost").innerHTML)return;
   const rev=!!document.getElementById("bRight");
   if(e.key===" "||e.key==="Enter"){e.preventDefault();if(!rev&&current)renderCard(true);}
@@ -955,6 +957,14 @@ document.addEventListener("mouseout",e=>{if(e.target.closest&&e.target.closest("
 document.getElementById("readNew").onclick=newText;
 document.getElementById("readPane").onclick=e=>{const w=e.target.closest(".rw[data-w]");if(w)speak(w.dataset.w);};
 document.getElementById("readPin").onclick=()=>{readPin=!readPin;const b=document.getElementById("readPin");b.classList.toggle("ghost",readPin);b.textContent=readPin?"Hide pinyin":"Show pinyin";document.getElementById("readPane").classList.toggle("pin",readPin);};
+// resizable sidebar
+(function(){const h=document.getElementById("sideHandle"),sb=document.getElementById("sidebar");
+  if(settings.sideWidth)sb.style.width=sb.style.flexBasis=settings.sideWidth+"px";
+  let drag=false;
+  h.addEventListener("mousedown",e=>{drag=true;h.classList.add("drag");document.body.style.userSelect="none";e.preventDefault();});
+  window.addEventListener("mousemove",e=>{if(!drag)return;const w=Math.max(190,Math.min(440,e.clientX));sb.style.width=sb.style.flexBasis=w+"px";});
+  window.addEventListener("mouseup",()=>{if(!drag)return;drag=false;h.classList.remove("drag");document.body.style.userSelect="";settings.sideWidth=parseInt(sb.style.width)||0;saveSettings();});
+})();
 initGame();applyAccent();loadDir();startDeckTimer();
 renderStats();renderChips();buildQueue();nextCard();
 </script></body></html>
