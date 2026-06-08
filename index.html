@@ -80,6 +80,17 @@ td.acc{font-weight:700;white-space:nowrap}
 .newrow .nh{font-size:24px;font-weight:600;width:32px;text-align:center}
 .newrow .np{color:var(--accent2);font-weight:700;font-size:13px;white-space:nowrap;min-width:64px}
 .newrow .nd{color:var(--muted);font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.levelup{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:90}
+.lu-card{background:var(--panel);border:2px solid var(--accent);border-radius:22px;padding:30px 46px;text-align:center;box-shadow:0 16px 60px rgba(0,0,0,.45);animation:luPop .5s cubic-bezier(.2,1.5,.4,1)}
+.lu-burst{font-size:58px;line-height:1;animation:luSpin 1s ease}
+.lu-title{font-size:26px;font-weight:900;letter-spacing:3px;color:var(--accent);margin-top:6px}
+.lu-lv{font-size:44px;font-weight:900;margin-top:2px}
+.lu-sub{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px}
+@keyframes luPop{0%{transform:scale(.3);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes luSpin{0%{transform:scale(0) rotate(-180deg)}60%{transform:scale(1.35) rotate(18deg)}100%{transform:scale(1) rotate(0)}}
+.confetti{position:fixed;top:-16px;width:9px;height:14px;border-radius:2px;opacity:.95;z-index:89;animation-name:confFall;animation-timing-function:linear;animation-fill-mode:forwards}
+@keyframes confFall{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(104vh) rotate(900deg);opacity:.85}}
+@media(prefers-reduced-motion:reduce){.confetti{display:none}.lu-card,.lu-burst{animation:none}}
 .study-wrap{max-width:640px;margin:0 auto;text-align:center}
 .progress{height:6px;background:var(--panel2);border-radius:3px;margin-bottom:16px;overflow:hidden}
 .progress>div{height:100%;background:var(--accent);width:0;transition:width .3s}
@@ -438,11 +449,32 @@ function grade(ok){const c=current;let mastered=0;
   if(c._cmp){c.parts.forEach(ch=>{const w=wordByHanzi(ch);if(w&&applyAnswer(w,ok))mastered++;});if(!ok)queue.push(c);}
   else{if(applyAnswer(c,ok))mastered++;if(!ok)queue.push(c);}
   const gained=(ok?(c._cmp?15:10):2)+mastered*50;
+  const lvBefore=levelInfo(game.xp).level;
   game.xp+=gained;game.reviews=(game.reviews||0)+1;game.mastersEarned=(game.mastersEarned||0)+mastered;
+  const lvAfter=levelInfo(game.xp).level;
   if(ok){game.sessionStreak=(game.sessionStreak||0)+1;if(game.sessionStreak>(game.bestStreak||0))game.bestStreak=game.sessionStreak;}
   else game.sessionStreak=0;
   saveGame();save();renderStats();renderChips();renderCharacter();
-  reactGrade(ok,gained,mastered);nextCard();}
+  reactGrade(ok,gained,mastered);
+  if(lvAfter>lvBefore)levelUp(lvAfter);
+  nextCard();}
+function levelUp(lv){
+  const title=TITLES[Math.min(TITLES.length-1,Math.floor((lv-1)/3))];
+  const fx=document.getElementById("fx");
+  const b=document.createElement("div");b.className="levelup";
+  b.innerHTML=`<div class="lu-card"><div class="lu-burst">${game.avatar}</div><div class="lu-title">LEVEL UP!</div><div class="lu-lv">Level ${lv}</div><div class="lu-sub">${title}</div></div>`;
+  fx.appendChild(b);
+  for(let i=0;i<54;i++){const cf=document.createElement("div");cf.className="confetti";
+    cf.style.left=(Math.random()*100)+"%";cf.style.background=COLORS[i%COLORS.length];
+    cf.style.animationDelay=(Math.random()*0.5).toFixed(2)+"s";cf.style.animationDuration=(1.9+Math.random()*1.2).toFixed(2)+"s";
+    fx.appendChild(cf);}
+  chime();
+  setTimeout(()=>{b.remove();fx.querySelectorAll(".confetti").forEach(x=>x.remove());},2800);
+}
+function chime(){try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const a=new A();const now=a.currentTime;
+  [523.25,659.25,783.99,1046.5].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.type="triangle";o.frequency.value=f;
+    o.connect(g);g.connect(a.destination);const t=now+i*0.1;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.22,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);o.start(t);o.stop(t+0.32);});
+  setTimeout(()=>{try{a.close();}catch(e){}},1400);}catch(e){}}
 function addNextEasiest(){
   const pool=words.filter(w=>w.bucket==="Archive"&&!skipPool.has(w.hanzi));
   if(!pool.length){toast(skipPool.size?"No more words to add (all remaining were skipped)":"No words left in Archive");return;}
