@@ -62,3 +62,12 @@ Opening the file directly with `file://` works in Safari. Chrome is stricter
 about loading the local `audio/` files that way — if audio is silent, either use
 Safari or serve the folder with `python3 -m http.server` and open
 `http://localhost:8000`.
+
+## Background images
+
+The cityscape backgrounds in `img/` are from Wikimedia Commons, under their
+respective licenses (attribution required):
+
+- `city1.jpg` — "Shanghai skyline at night" by Ernest Jourdier (CC BY 4.0)
+- `city2.jpg` — "Hong Kong Skyline Panorama, Dec 2008" by Diliff (CC BY-SA 3.0)
+- `city3.jpg` — "Shenzhen Skyline At Night" by Andreas Bunen (CC BY 3.0)

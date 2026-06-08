@@ -2,13 +2,16 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Chinese Flashcards</title>
 <style>
-:root{--bg:#f6f7fb;--panel:#ffffff;--panel2:#eef1f7;--line:#e3e8f0;--text:#23262f;--muted:#646b7a;
+:root{--bg:#f6f7fb;--panel:#ffffff;--panel2:#eef1f7;--line:#e3e8f0;--text:#23262f;--muted:#646b7a;--bgveil:rgba(244,246,250,.84);
 --accent:#c0392b;--accent2:#c77f10;--green:#23a06b;--red:#e8503a;--blue:#4d8af0;--purple:#8a52d6;--yellow:#ffcd1f;--shadow:0 4px 18px rgba(20,30,60,.08);}
-body.dark{--bg:#0f1115;--panel:#1a1d24;--panel2:#222631;--line:#2d323e;--text:#e8eaed;--muted:#9aa3b2;
+body.dark{--bg:#0f1115;--panel:#1a1d24;--panel2:#222631;--line:#2d323e;--text:#e8eaed;--muted:#9aa3b2;--bgveil:rgba(13,15,20,.80);
 --accent:#d4503e;--accent2:#f0a830;--green:#3ecf8e;--red:#e8503a;--blue:#4d8af0;--purple:#a574f0;--yellow:#ffcd1f;--shadow:0 6px 24px rgba(0,0,0,.35);}
+#cityscape{position:fixed;inset:0;z-index:-2;background-size:cover;background-position:center}
+#cityscape::after{content:"";position:absolute;inset:0;background:var(--bgveil)}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Avenir Next","Avenir","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
 background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+body.hascity{background:transparent}
 button,input,select,textarea,h1,h2,h3,h4{font-family:inherit}
 header{padding:14px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel)}
 header h1{font-size:19px;font-weight:800;letter-spacing:.2px}
@@ -240,6 +243,7 @@ main{flex:1;max-width:1040px;margin:0 auto;padding:22px 26px}
 #sideHandle:hover,#sideHandle.drag{background:var(--accent)}
 @media(max-width:900px){#sideHandle{display:none}}
 </style></head><body>
+<div id="cityscape"></div>
 <header><h1><span class="flag">🇨🇳</span> Chinese Flashcards</h1>
 <div class="tabs"><button class="tab active" data-view="study">Study</button><button class="tab" data-view="read">Read</button><button class="tab" data-view="browse">Browse</button></div>
 <button class="gear" id="gear" title="Settings">Settings</button></header>
@@ -957,6 +961,9 @@ document.addEventListener("mouseout",e=>{if(e.target.closest&&e.target.closest("
 document.getElementById("readNew").onclick=newText;
 document.getElementById("readPane").onclick=e=>{const w=e.target.closest(".rw[data-w]");if(w)speak(w.dataset.w);};
 document.getElementById("readPin").onclick=()=>{readPin=!readPin;const b=document.getElementById("readPin");b.classList.toggle("ghost",readPin);b.textContent=readPin?"Hide pinyin":"Show pinyin";document.getElementById("readPane").classList.toggle("pin",readPin);};
+// cityscape background (random per load; falls back to solid colour if missing)
+(function(){const imgs=["img/city1.jpg","img/city2.jpg","img/city3.jpg"];const pick=imgs[Math.floor(Math.random()*imgs.length)];
+  const t=new Image();t.onload=()=>{document.getElementById("cityscape").style.backgroundImage="url('"+pick+"')";document.body.classList.add("hascity");};t.src=pick;})();
 // resizable sidebar
 (function(){const h=document.getElementById("sideHandle"),sb=document.getElementById("sidebar");
   if(settings.sideWidth)sb.style.width=sb.style.flexBasis=settings.sideWidth+"px";
