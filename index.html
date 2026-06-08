@@ -158,7 +158,8 @@ td.acc{font-weight:700;white-space:nowrap}
 #toast.show{opacity:1}
 /* RPG character panel */
 .layout{display:flex;align-items:stretch;gap:0}
-#sidebar{width:250px;flex:0 0 250px;padding:18px 16px;background:var(--panel);border-right:1px solid var(--line);min-height:calc(100vh - 60px);align-self:stretch}
+#sidebar{width:250px;flex:0 0 250px;padding:18px 16px;background:var(--panel);border-right:1px solid var(--line);min-height:calc(100vh - 60px);align-self:stretch;overflow:hidden;box-sizing:border-box}
+#sidebar *{max-width:100%}
 main{flex:1;max-width:1040px;margin:0 auto;padding:22px 26px}
 .hero{background:none;border:none;border-radius:0;padding:6px 0 0;box-shadow:none;text-align:center}
 .avatar{width:84px;height:84px;border-radius:50%;background:var(--panel2);border:3px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:46px;margin:0 auto 8px;cursor:pointer;transition:transform .15s;user-select:none}
@@ -185,8 +186,8 @@ main{flex:1;max-width:1040px;margin:0 auto;padding:22px 26px}
 .attr .lab .v{color:var(--accent)}
 .attr .ab{height:7px;background:var(--panel2);border-radius:4px;overflow:hidden}
 .attr .ab>div{height:100%;border-radius:4px;transition:width .5s;background:var(--accent)}
-.profrow{display:flex;gap:6px;margin-bottom:12px}
-.profrow select{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px;font-size:13px;font-weight:700;outline:none}
+.profrow{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.profrow select{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px;font-size:13px;font-weight:700;outline:none}
 .profbtn{padding:8px 10px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:9px;cursor:pointer;font-size:12px;font-weight:700}
 .profbtn:hover{color:var(--text);border-color:var(--accent)}
 .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
@@ -316,7 +317,7 @@ function loadWords(){let s=JSON.parse(localStorage.getItem(wkey())||"null");
   return w;}
 let words=loadWords();
 function save(){localStorage.setItem(wkey(),JSON.stringify(words));autosave();}
-let settings=Object.assign({theme:"light",autoplay:true,rate:0.9,onlineVoice:true,promoteThreshold:5,retiredMix:true,quizCompounds:false,readDiff:2,readLen:"any",cmpMax:2,sideWidth:0},JSON.parse(localStorage.getItem(SKEY)||"{}"));
+let settings=Object.assign({theme:"light",autoplay:true,rate:0.9,onlineVoice:true,promoteThreshold:5,retiredMix:true,quizCompounds:false,readDiff:2,readLen:"any",cmpMax:2,sideWidth:0,bg:"random"},JSON.parse(localStorage.getItem(SKEY)||"{}"));
 if(!settings.apMigrated){settings.autoplay=true;settings.apMigrated=true;localStorage.setItem(SKEY,JSON.stringify(settings));}
 function saveSettings(){localStorage.setItem(SKEY,JSON.stringify(settings));}
 function applyTheme(){document.body.classList.toggle("dark",settings.theme==="dark");}
@@ -499,7 +500,7 @@ function renderCard(rev){
       ${rev?`<button class="cbtn miss" id="bWrong" title="Missed">✕</button><button class="cbtn got" id="bRight" title="Got it">✓</button>`:``}
       <button class="cbtn skip" id="bSkip" title="Skip">⏭</button>
     </div>`;
-  document.getElementById("card").onclick=e=>{if(e.target.closest("[data-spk]"))return;if(!rev)renderCard(true);};
+  document.getElementById("card").onclick=e=>{if(e.target.closest("[data-spk]"))return;if(!rev){renderCard(true);speak(c.hanzi);}};
   document.getElementById("bAudio").onclick=()=>speak(c.hanzi);
   document.getElementById("bSkip").onclick=()=>{queue.push(current);nextCard();};
   if(!rev&&settings.autoplay)speak(c.hanzi); // auto-play audio when a new card appears
@@ -630,7 +631,9 @@ function openSettings(cat){settingsCat=cat||settingsCat||"Visual";cat=settingsCa
     <div class="setrow"><div><div class="t">Dark mode</div><div class="s">Switch between light and dark themes</div></div>
       <label class="switch"><input type="checkbox" id="s_theme" ${settings.theme==="dark"?"checked":""}><span class="slider"></span></label></div>
     <div class="setrow"><div><div class="t">Theme color</div><div class="s">Accent for buttons and highlights — applies to this profile</div></div>
-      <div class="cocols" id="s_accent">${COLORS.map(c=>`<button class="${(game&&game.accent===c)?'on':''}" data-c="${c}" style="background:${c}"></button>`).join("")}</div></div>`;}
+      <div class="cocols" id="s_accent">${COLORS.map(c=>`<button class="${(game&&game.accent===c)?'on':''}" data-c="${c}" style="background:${c}"></button>`).join("")}</div></div>
+    <div class="setrow"><div><div class="t">Background</div><div class="s">Cityscape behind the app (high-resolution photos)</div></div>
+      <select id="s_bg">${[["random","Random city"],["1","Shanghai"],["2","Hong Kong"],["3","Kaohsiung"],["none","None (plain)"]].map(o=>`<option value="${o[0]}" ${settings.bg===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></div>`;}
   else if(cat==="Audio"){b=`
     <div class="setrow"><div><div class="t">High-quality online voice</div><div class="s">Used only if a local clip is missing; falls back to the system voice offline</div></div>
       <label class="switch"><input type="checkbox" id="s_online" ${settings.onlineVoice?"checked":""}><span class="slider"></span></label></div>
@@ -685,6 +688,7 @@ function openSettings(cat){settingsCat=cat||settingsCat||"Visual";cat=settingsCa
   const on=(id,ev,fn)=>{const el=document.getElementById(id);if(el)el[ev]=fn;};
   on("s_theme","onchange",e=>{settings.theme=e.target.checked?"dark":"light";saveSettings();applyTheme();applyAccent();});
   const ac=document.getElementById("s_accent");if(ac)ac.onclick=e=>{const btn=e.target.closest("[data-c]");if(!btn)return;game.accent=btn.dataset.c;saveGame();applyAccent();renderCharacter();document.querySelectorAll("#s_accent button").forEach(x=>x.classList.toggle("on",x===btn));};
+  on("s_bg","onchange",e=>{settings.bg=e.target.value;saveSettings();applyCity();});
   on("s_online","onchange",e=>{settings.onlineVoice=e.target.checked;saveSettings();});
   on("s_auto","onchange",e=>{settings.autoplay=e.target.checked;saveSettings();});
   on("s_rate","oninput",e=>{settings.rate=+e.target.value;saveSettings();document.getElementById("rateLbl").textContent=settings.rate.toFixed(1)+"×";});
@@ -966,15 +970,19 @@ document.addEventListener("mouseout",e=>{if(e.target.closest&&e.target.closest("
 document.getElementById("readNew").onclick=newText;
 document.getElementById("readPane").onclick=e=>{const w=e.target.closest(".rw[data-w]");if(w)speak(w.dataset.w);};
 document.getElementById("readPin").onclick=()=>{readPin=!readPin;const b=document.getElementById("readPin");b.classList.toggle("ghost",readPin);b.textContent=readPin?"Hide pinyin":"Show pinyin";document.getElementById("readPane").classList.toggle("pin",readPin);};
-// cityscape background (random per load; falls back to solid colour if missing)
-(function(){const imgs=["img/city1.jpg","img/city2.jpg","img/city3.jpg"];const pick=imgs[Math.floor(Math.random()*imgs.length)];
-  const t=new Image();t.onload=()=>{document.getElementById("cityscape").style.backgroundImage="url('"+pick+"')";document.body.classList.add("hascity");};t.src=pick;})();
+// cityscape background — honours the Visual "Background" setting; falls back to solid colour if missing
+function applyCity(){const map={"1":"img/city1.jpg","2":"img/city2.jpg","3":"img/city3.jpg"};
+  const cs=document.getElementById("cityscape");const bg=settings.bg||"random";
+  if(bg==="none"){document.body.classList.remove("hascity");cs.style.backgroundImage="";return;}
+  const pick=map[bg]||["img/city1.jpg","img/city2.jpg","img/city3.jpg"][Math.floor(Math.random()*3)];
+  const t=new Image();t.onload=()=>{cs.style.backgroundImage="url('"+pick+"')";document.body.classList.add("hascity");};t.src=pick;}
+applyCity();
 // resizable sidebar
 (function(){const h=document.getElementById("sideHandle"),sb=document.getElementById("sidebar");
   if(settings.sideWidth)sb.style.width=sb.style.flexBasis=settings.sideWidth+"px";
   let drag=false;
   h.addEventListener("mousedown",e=>{drag=true;h.classList.add("drag");document.body.style.userSelect="none";e.preventDefault();});
-  window.addEventListener("mousemove",e=>{if(!drag)return;const w=Math.max(190,Math.min(440,e.clientX));sb.style.width=sb.style.flexBasis=w+"px";});
+  window.addEventListener("mousemove",e=>{if(!drag)return;const w=Math.max(210,Math.min(440,e.clientX));sb.style.width=sb.style.flexBasis=w+"px";});
   window.addEventListener("mouseup",()=>{if(!drag)return;drag=false;h.classList.remove("drag");document.body.style.userSelect="";settings.sideWidth=parseInt(sb.style.width)||0;saveSettings();});
 })();
 initGame();applyAccent();loadDir();startDeckTimer();
