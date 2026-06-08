@@ -575,8 +575,10 @@ function openSettings(){document.getElementById("modalHost").innerHTML=`<div cla
   <div class="setrow"><div><div class="t">Speech speed</div><div class="s" id="rateLbl">${settings.rate.toFixed(1)}×</div></div>
     <input type="range" id="s_rate" min="0.5" max="1.2" step="0.1" value="${settings.rate}" style="width:130px"></div>
   <div class="setrow"><div><div class="t">Test pronunciation</div><div class="s">Tap to hear 你好 (nǐ hǎo)</div></div><button class="spk" data-spk="你好">🔊</button></div>
-  <div class="setrow"><div><div class="t">Progress file</div><div class="s">Save / load your accuracy data (progress.csv)</div></div>
+  <div class="setrow"><div><div class="t">Progress file</div><div class="s">Save / load this profile (vocab + stats)</div></div>
     <div style="display:flex;gap:6px"><button class="minib" id="s_save">Save</button><button class="minib" id="s_load">Load</button></div></div>
+  <div class="setrow"><div><div class="t">Save folder</div><div class="s" id="folderName"></div></div>
+    <button class="minib" id="s_folder">Choose folder</button></div>
   <div class="setrow"><div><div class="t">Correct answers to advance</div><div class="s">Right this many times in a row to move a word toward Retired (a miss moves it back one level)</div></div>
     <div style="display:flex;align-items:center;gap:8px"><button class="minib" id="s_thrdn">−</button><b id="thrLbl" style="min-width:18px;text-align:center">${settings.promoteThreshold}</b><button class="minib" id="s_thrup">+</button></div></div>
   <div class="setrow"><div><div class="t">Mix in retired words</div><div class="s">Occasionally show retired words in any mode so they stay fresh</div></div>
@@ -599,6 +601,7 @@ function openSettings(){document.getElementById("modalHost").innerHTML=`<div cla
   document.getElementById("s_auto").onchange=e=>{settings.autoplay=e.target.checked;saveSettings();};
   document.getElementById("s_rate").oninput=e=>{settings.rate=+e.target.value;saveSettings();document.getElementById("rateLbl").textContent=settings.rate.toFixed(1)+"×";};
   document.getElementById("s_save").onclick=saveProgress;document.getElementById("s_load").onclick=loadProgress;
+  renderFolderRow();document.getElementById("s_folder").onclick=chooseDir;
   const setThr=v=>{settings.promoteThreshold=Math.max(1,Math.min(20,v));saveSettings();document.getElementById("thrLbl").textContent=settings.promoteThreshold;renderCard(!!document.getElementById("bRight"));};
   document.getElementById("s_thrup").onclick=()=>setThr(settings.promoteThreshold+1);
   document.getElementById("s_thrdn").onclick=()=>setThr(settings.promoteThreshold-1);
@@ -623,12 +626,31 @@ function profName(id){return (profiles.find(p=>p.id===(id||activeId))||{}).name|
 function todayISO(){return new Date().toISOString().slice(0,10);}
 function csvName(id){return "progress_"+profName(id).replace(/[^a-z0-9]+/gi,"_")+"_"+todayISO()+".csv";}
 function downloadFile(name,content){const b=new Blob([content],{type:"text/csv"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+// ---- save folder (checkpoints) via File System Access ----
+let dirHandle=null;
+function idbReq(fn){return new Promise((res,rej)=>{const r=indexedDB.open("cy2db",1);r.onupgradeneeded=()=>{r.result.createObjectStore("kv");};r.onsuccess=()=>{try{fn(r.result,res,rej);}catch(e){rej(e);}};r.onerror=()=>rej(r.error);});}
+function idbSet(k,v){return idbReq((db,res,rej)=>{const tx=db.transaction("kv","readwrite");tx.objectStore("kv").put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);});}
+function idbGet(k){return idbReq((db,res,rej)=>{const tx=db.transaction("kv","readonly");const g=tx.objectStore("kv").get(k);g.onsuccess=()=>res(g.result);g.onerror=()=>rej(g.error);});}
+async function loadDir(){try{const h=await idbGet("checkpointsDir");if(h)dirHandle=h;}catch(e){}renderFolderRow();}
+async function verifyPerm(h){try{const o={mode:"readwrite"};if((await h.queryPermission(o))==="granted")return true;if((await h.requestPermission(o))==="granted")return true;}catch(e){}return false;}
+async function chooseDir(){if(!window.showDirectoryPicker){toast("This browser can't pick folders — saves will download");return false;}
+  try{dirHandle=await window.showDirectoryPicker({mode:"readwrite"});await idbSet("checkpointsDir",dirHandle);renderFolderRow();toast("Saving to “"+dirHandle.name+"”");return true;}catch(e){return false;}}
+async function writeToDir(name,content){if(!dirHandle)return false;if(!(await verifyPerm(dirHandle)))return false;
+  try{const fh=await dirHandle.getFileHandle(name,{create:true});const ws=await fh.createWritable();await ws.write(content);await ws.close();return true;}catch(e){return false;}}
 async function saveProgress(){const csv=progressCSV();const fn=csvName();
+  if(window.showDirectoryPicker){
+    if(!dirHandle){const ok=await chooseDir();if(!ok){downloadFile(fn,csv);toast(fn+" downloaded");return;}}
+    if(await writeToDir(fn,csv)){toast("Saved to "+dirHandle.name+"/"+fn);return;}
+  }
   if(window.showSaveFilePicker){try{if(!fileHandles[activeId])fileHandles[activeId]=await window.showSaveFilePicker({suggestedName:fn,types:[{description:"CSV",accept:{"text/csv":[".csv"]}}]});
     const ws=await fileHandles[activeId].createWritable();await ws.write(csv);await ws.close();toast("Saved "+profName());return;}catch(e){if(e.name==="AbortError")return;}}
   downloadFile(fn,csv);toast(fn+" downloaded");}
-async function autosave(){const h=fileHandles[activeId];if(h){try{const ws=await h.createWritable();await ws.write(progressCSV());await ws.close();}catch(e){}}}
-function loadProgress(){const inp=document.createElement("input");inp.type="file";inp.accept=".csv";
+async function autosave(){if(dirHandle){await writeToDir(csvName(),progressCSV());return;}
+  const h=fileHandles[activeId];if(h){try{const ws=await h.createWritable();await ws.write(progressCSV());await ws.close();}catch(e){}}}
+function renderFolderRow(){const el=document.getElementById("folderName");if(el)el.textContent=dirHandle?("Saving to “"+dirHandle.name+"”"):"Not set — saves download to your browser's folder";}
+function loadProgress(){
+  if(!confirm("Load a save file? This replaces THIS profile's current words and stats with the file's contents. (Tip: save first if you want to keep your current progress.)"))return;
+  const inp=document.createElement("input");inp.type="file";inp.accept=".csv";
   inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();
     r.onload=()=>{try{const loadedStats=applyCSV(r.result);save();saveGame();applyAccent();renderStats();renderChips();renderCharacter();buildQueue();nextCard();renderBrowse();closeModal();toast(loadedStats?"Loaded vocab + profile stats":"Vocab loaded (no stats in file)");}catch(e){alert("Could not read file");}};r.readAsText(f);};inp.click();}
 function applyCSV(text){const lines=text.split(/\r?\n/).filter(l=>l.trim());
@@ -811,6 +833,6 @@ function openCharacter(){
   document.getElementById("c_cancel").onclick=closeModal;
   document.getElementById("c_save").onclick=()=>{game.name=document.getElementById("c_name").value.trim()||"Scholar";game.avatar=pa;game.accent=pc;saveGame();applyAccent();renderCharacter();closeModal();toast("Character saved");};
 }
-initGame();applyAccent();
+initGame();applyAccent();loadDir();
 renderStats();renderChips();buildQueue();nextCard();
 </script></body></html>
