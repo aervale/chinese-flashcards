@@ -414,9 +414,10 @@ function buildQueue(){
   const setHas=new Set(studySet());
   queue=words.filter(w=>setHas.has(w.hanzi));
   queue.sort((a,b)=>(b.wrong-a.wrong)+(Math.floor(rnd()*6)-3));
-  // Compound cards — only when every component character is in the current practice set.
+  // Compound cards — eligible if at least one character is in the deck AND every character is out of Archive.
   if(settings.quizCompounds){
-    const cmx=settings.cmpMax||2;const eligible=COMPOUNDS.filter(cp=>cp.w.length<=cmx&&cp.c.every(ch=>setHas.has(ch)));
+    const active=new Set();words.forEach(w=>{if(w.bucket!=="Archive")active.add(w.hanzi);});
+    const cmx=settings.cmpMax||2;const eligible=COMPOUNDS.filter(cp=>cp.w.length<=cmx&&cp.c.some(ch=>setHas.has(ch))&&cp.c.every(ch=>active.has(ch)));
     const n=Math.min(eligible.length,Math.max(2,Math.round(queue.length*0.15)));
     const used=new Set();
     for(let i=0;i<n&&eligible.length;i++){
