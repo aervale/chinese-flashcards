@@ -1,6 +1,13 @@
 <!DOCTYPE html><html lang="en"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Chinese Flashcards</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#c0392b">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chinese">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
 <style>
 :root{--bg:#f6f7fb;--panel:#ffffff;--panel2:#eef1f7;--line:#e3e8f0;--text:#23262f;--muted:#646b7a;--bgveil:rgba(244,246,250,.84);
 --accent:#c0392b;--accent2:#c77f10;--green:#23a06b;--red:#e8503a;--blue:#4d8af0;--purple:#8a52d6;--yellow:#ffcd1f;--shadow:0 4px 18px rgba(20,30,60,.08);}
@@ -1011,4 +1018,8 @@ applyCity();
 })();
 initGame();applyAccent();loadDir();startDeckTimer();
 renderStats();renderChips();buildQueue();nextCard();
+// PWA: register the service worker when served over http(s) (no-op on local file://)
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});
+}
 </script></body></html>
