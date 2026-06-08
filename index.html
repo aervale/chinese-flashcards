@@ -70,7 +70,8 @@ td.acc{font-weight:700;white-space:nowrap}
 .deckbar .setstatus{flex-basis:100%;text-align:center}
 .setbtn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
 .setbtn.ghost:hover{border-color:var(--accent);filter:none}
-.dtag{padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);cursor:pointer;font-size:13px;font-weight:700}
+.dtags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;margin-bottom:4px}
+.dtag{padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);cursor:pointer;font-size:13px;font-weight:700;width:auto;height:auto}
 .dtag.on{border-color:var(--accent);color:#fff;background:var(--accent)}
 .flag{margin-right:2px}
 .study-wrap{max-width:640px;margin:0 auto;text-align:center}
@@ -332,7 +333,7 @@ function openDeck(){
     <h3>Build practice deck</h3>
     <div class="wd" style="margin-bottom:6px">Pick which batches to pull from and how many words. You'll train only on this deck until you build a new one.</div>
     <label>Draw from</label>
-    <div class="avpick" id="d_src">${BUCKETS.map(b=>{const n=words.filter(w=>w.bucket===b).length;return `<button class="dtag ${deckSrc.has(b)?'on':''}" data-b="${b}">${BLABEL[b]} · ${n}</button>`;}).join("")}</div>
+    <div class="dtags" id="d_src">${BUCKETS.map(b=>{const n=words.filter(w=>w.bucket===b).length;return `<button class="dtag ${deckSrc.has(b)?'on':''}" data-b="${b}">${BLABEL[b]} · ${n}</button>`;}).join("")}</div>
     <label>How many words</label><input id="d_size" type="number" min="1" max="500" value="${deckSize}">
     <div class="setrow" style="margin-top:10px"><div><div class="t">Use my weakest words instead</div><div class="s">Ignore the batches above and pick your lowest-accuracy words</div></div>
       <label class="switch"><input type="checkbox" id="d_weak" ${deckWeak?"checked":""}><span class="slider"></span></label></div>
