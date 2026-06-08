@@ -25,9 +25,14 @@ at comes up more often.
 ## Features
 
 - Study by character (汉字 → meaning) or by meaning (meaning → 汉字).
+- **Practice sets** — instead of drilling a whole bucket, you pick which buckets
+  to draw from and how many words (e.g. 50 from Daily + Bidaily), and train only
+  that subset. A **Weakest** button builds the set from your lowest-accuracy
+  words instead. The set is saved per profile and persists until you reset it.
 - Audio for every word and example sentence — clips are stored in `audio/`, so
   pronunciation works fully offline.
-- A **Weakest** mode that pulls my 50 lowest-accuracy words for a focused review.
+- Optional compound-word quizzing, limited to compounds whose characters are all
+  in your current practice set.
 - Per-word stats (correct / missed / accuracy) and a searchable, sortable list
   of all ~2,600 words.
 - Add your own words, move words between buckets, reset stats per word or globally.
@@ -35,10 +40,11 @@ at comes up more often.
 - An RPG layer: XP and levels, a customizable character, and attributes that
   level up as you study (Power, Consistency, Memory, Wisdom, Focus, Diligence).
 - Multiple profiles, each with its own save file and character. A new profile
-  starts from scratch — every word in the Archive backlog, level 1.
+  starts from scratch — every word in the Archive backlog, level 1, attributes 0.
+  Creating one never touches other profiles.
 - Progress is saved in the browser and can be exported to / imported from a CSV.
-  Each profile saves to its own file, named `progress_<profile>_<date>.csv`, so
-  it's clear which profile and day a save belongs to.
+  Each profile saves to its own file, named `progress_<profile>_<date>.csv`.
+  These live in the `checkpoints/` folder.
 
 ## Data
 
