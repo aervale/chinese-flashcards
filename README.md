@@ -43,8 +43,11 @@ at comes up more often.
   starts from scratch — every word in the Archive backlog, level 1, attributes 0.
   Creating one never touches other profiles.
 - Progress is saved in the browser and can be exported to / imported from a CSV.
-  Each profile saves to its own file, named `progress_<profile>_<date>.csv`.
-  These live in the `checkpoints/` folder.
+  Each profile saves to its own file, named `progress_<profile>_<date>.csv`,
+  kept locally in a `checkpoints/` folder (git-ignored — not published).
+- Words are organized into batches by how well you know them: Learning →
+  Reviewing → Familiar → Mastered, plus an Archive backlog. A new profile starts
+  with a default deck of the 10 most common words in Learning.
 
 ## Data
 
