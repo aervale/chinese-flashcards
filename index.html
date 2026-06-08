@@ -7,15 +7,16 @@
 body.dark{--bg:#0f1115;--panel:#1a1d24;--panel2:#222631;--line:#2d323e;--text:#e8eaed;--muted:#9aa3b2;
 --accent:#5b6cff;--accent2:#f0a830;--green:#3ecf8e;--red:#e8503a;--blue:#4d8af0;--purple:#a574f0;--yellow:#ffcd1f;--shadow:0 6px 24px rgba(0,0,0,.35);}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+body{font-family:"Avenir Next","Avenir","Helvetica Neue","PingFang SC","Microsoft YaHei",sans-serif;
 background:var(--bg);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+button,input,select,textarea,h1,h2,h3,h4{font-family:inherit}
 header{padding:14px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--panel)}
 header h1{font-size:19px;font-weight:800;letter-spacing:.2px}
 header h1 .zh{color:var(--accent);margin-right:8px}
 .tabs{display:flex;gap:4px;margin-left:auto;background:var(--panel2);padding:4px;border-radius:10px}
 .tab{padding:8px 18px;border-radius:7px;cursor:pointer;color:var(--muted);font-weight:700;font-size:14px;border:none;background:none}
 .tab.active{background:var(--accent);color:#fff}
-.gear{background:var(--panel2);border:1px solid var(--line);color:var(--muted);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:17px}
+.gear{background:var(--panel2);border:1px solid var(--line);color:var(--muted);padding:8px 16px;border-radius:10px;cursor:pointer;font-size:13px;font-weight:700}
 .gear:hover{color:var(--text)}
 main{max-width:1000px;margin:0 auto;padding:22px}
 .hidden{display:none!important}
@@ -66,7 +67,8 @@ td.acc{font-weight:700;white-space:nowrap}
 .setlink{background:none;border:none;color:var(--accent);font-size:13px;font-weight:700;cursor:pointer;padding:0;text-decoration:underline}
 .setlink.reset{color:var(--red)}
 .setstatus{font-size:12px;color:var(--muted)}.setstatus b{color:var(--text)}
-.deckbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-bottom:18px}
+.deckbar{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;margin-bottom:8px}
+#deckStatus{text-align:center;font-size:12px;color:var(--muted);margin-bottom:16px}
 .deckbar .setstatus{flex-basis:100%;text-align:center}
 .setbtn.ghost{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
 .setbtn.ghost:hover{border-color:var(--accent);filter:none}
@@ -111,11 +113,11 @@ td.acc{font-weight:700;white-space:nowrap}
 .card .hint{position:absolute;bottom:14px;font-size:12px;color:var(--muted);opacity:.6}
 .card .meta{position:absolute;top:14px;right:16px;display:flex;gap:6px;align-items:center}
 .card .wstat{position:absolute;top:14px;left:16px;font-size:12px;color:var(--muted)}
-.spk{background:var(--panel2);border:1px solid var(--line);color:var(--accent2);border-radius:50%;width:34px;height:34px;cursor:pointer;font-size:15px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center}
-.spk.sm{width:26px;height:26px;font-size:13px}.spk:hover{background:var(--accent2);color:#fff}.spk:active{transform:scale(.92)}
+.spk{background:var(--panel2);border:1px solid var(--line);color:var(--accent2);border-radius:8px;padding:3px 10px;cursor:pointer;font-size:11px;font-weight:700;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center}
+.spk.sm{padding:2px 8px;font-size:10px}.spk:hover{background:var(--accent2);color:#fff}.spk:active{transform:scale(.95)}
 /* control bar under card (Quizlet-like) */
-.ctrlbar{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px}
-.cbtn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:50%;width:50px;height:50px;font-size:20px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+.ctrlbar{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:18px;flex-wrap:wrap}
+.cbtn{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:12px;padding:12px 22px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:var(--shadow)}
 .cbtn:hover{border-color:var(--accent)}
 .cbtn.big{width:62px;height:62px;font-size:24px}
 .cbtn.miss{border-color:var(--red);color:var(--red)}.cbtn.miss:hover{background:var(--red);color:#fff}
@@ -182,7 +184,7 @@ main{flex:1;max-width:1000px;margin:0}
 .attr .ab>div{height:100%;border-radius:4px;transition:width .5s;background:var(--accent)}
 .profrow{display:flex;gap:6px;margin-bottom:12px}
 .profrow select{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:8px;font-size:13px;font-weight:700;outline:none}
-.profbtn{width:36px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:9px;cursor:pointer;font-size:15px}
+.profbtn{padding:8px 10px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:9px;cursor:pointer;font-size:12px;font-weight:700}
 .profbtn:hover{color:var(--text);border-color:var(--accent)}
 .statgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
 .statcell{background:var(--panel2);border-radius:10px;padding:10px}
@@ -202,15 +204,18 @@ main{flex:1;max-width:1000px;margin:0}
 </style></head><body>
 <header><h1><span class="flag">🇨🇳</span> Chinese Flashcards</h1>
 <div class="tabs"><button class="tab active" data-view="study">Study</button><button class="tab" data-view="browse">Browse</button></div>
-<button class="gear" id="gear" title="Settings">⚙</button></header>
+<button class="gear" id="gear" title="Settings">Settings</button></header>
 <div class="layout">
 <aside id="sidebar"></aside>
 <main>
 <div class="statbar" id="stats"></div>
 <section id="study">
-  <div class="dirwrap"><div class="seg" id="dirSeg">
-    <button data-dir="char" class="on">汉字 → Meaning</button><button data-dir="term">Meaning → 汉字</button></div></div>
-  <div class="deckbar" id="deckBar"></div>
+  <div class="deckbar">
+    <div class="seg" id="dirSeg"><button data-dir="char" class="on">汉字 → Meaning</button><button data-dir="term">Meaning → 汉字</button></div>
+    <button class="setbtn" id="openDeck">Build deck</button>
+    <button class="setbtn ghost" id="openAdd">Add words</button>
+  </div>
+  <div id="deckStatus"></div>
   <div class="study-wrap"><div class="progress"><div id="progBar"></div></div><div id="cardHost"></div></div>
 </section>
 <section id="browse" class="hidden">
@@ -281,7 +286,7 @@ function accColor(a){if(a===null)return"var(--muted)";if(a>=80)return"var(--gree
 function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function hsel(w){return w.hsk?("HSK "+w.hsk):"";}
 function sentHL(w){if(!w.sent)return"";return"<div class='sent'>"+esc(w.sent).split(w.hanzi).join("<em>"+w.hanzi+"</em>")+
-  `<button class="spk sm" data-spk="${esc(w.sent)}">🔊</button></div>`;}
+  `<button class="spk sm" data-spk="${esc(w.sent)}">Play</button></div>`;}
 function renderStats(){
   const by={};BUCKETS.forEach(b=>by[b]=0);let c=0,t=0;
   words.forEach(w=>{by[w.bucket]=(by[w.bucket]||0)+1;c+=w.correct;t+=w.correct+w.wrong;});
@@ -341,12 +346,7 @@ function buildQueue(){
 function renderChips(){renderDeckBar();}
 function renderDeckBar(){
   const cur=studySet().length;
-  document.getElementById("deckBar").innerHTML=`
-    <button class="setbtn" id="openDeck">🎯 Build deck</button>
-    <button class="setbtn ghost" id="openAdd">＋ Add words</button>
-    <div class="setstatus">${cur?`Studying <b>${cur}</b> words · <button class="setlink reset" id="deckReset">reset deck</button>`:`No deck yet — tap “Build deck” to choose your words`}</div>`;
-  document.getElementById("openDeck").onclick=openDeck;
-  document.getElementById("openAdd").onclick=openAddWords;
+  document.getElementById("deckStatus").innerHTML=cur?`Studying <b>${cur}</b> words · <button class="setlink reset" id="deckReset">reset deck</button>`:`No deck yet — tap "Build deck" to choose your words`;
   const r=document.getElementById("deckReset");if(r)r.onclick=resetSet;
 }
 let deckSrc=new Set(["Daily","Bidaily"]),deckSize=50,deckWeak=false,addCount=10,addShow=true;
@@ -359,7 +359,7 @@ function openDeck(){
     <label>How many words</label><input id="d_size" type="number" min="1" max="500" value="${deckSize}">
     <div class="setrow" style="margin-top:10px"><div><div class="t">Use my weakest words instead</div><div class="s">Ignore the batches above and pick your lowest-accuracy words</div></div>
       <label class="switch"><input type="checkbox" id="d_weak" ${deckWeak?"checked":""}><span class="slider"></span></label></div>
-    <div class="modal-btns"><button class="cancel-b" id="d_cancel">Cancel</button><button class="save-b" id="d_build">🎯 Build deck</button></div></div></div>`;
+    <div class="modal-btns"><button class="cancel-b" id="d_cancel">Cancel</button><button class="save-b" id="d_build">Build deck</button></div></div></div>`;
   document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
   document.getElementById("d_cancel").onclick=closeModal;
   document.getElementById("d_src").onclick=e=>{const b=e.target.closest("[data-b]");if(!b)return;const k=b.dataset.b;
@@ -369,7 +369,9 @@ function openDeck(){
     deckWeak=document.getElementById("d_weak").checked;
     let pool;
     if(deckWeak){pool=words.filter(w=>(w.correct+w.wrong)>0).sort((a,b)=>acc(a)-acc(b)||b.wrong-a.wrong);}
-    else{pool=words.filter(w=>deckSrc.has(w.bucket));for(let i=pool.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));const t=pool[i];pool[i]=pool[j];pool[j]=t;}}
+    else{pool=words.filter(w=>deckSrc.has(w.bucket));
+      // prioritize low-percentage words; unstudied fall back to frequency (most common first)
+      pool.sort((a,b)=>{const aa=acc(a)===null?100:acc(a),ab=acc(b)===null?100:acc(b);return aa-ab||(b.wrong-a.wrong)||((a.freq??1e9)-(b.freq??1e9));});}
     if(!pool.length){toast(deckWeak?"No studied words yet — study some first":"Those batches have no words");return;}
     game.set=pool.slice(0,deckSize).map(w=>w.hanzi);saveGame();
     buildQueue();nextCard();closeModal();renderDeckBar();toast("Deck: "+game.set.length+" words");};
@@ -382,7 +384,7 @@ function openAddWords(){
     <label>How many to add</label><input id="a_size" type="number" min="1" max="200" value="${addCount}">
     <div class="setrow" style="margin-top:10px"><div><div class="t">Show the new words</div><div class="s">Preview the words you just added before studying them</div></div>
       <label class="switch"><input type="checkbox" id="a_show" ${addShow?"checked":""}><span class="slider"></span></label></div>
-    <div class="modal-btns"><button class="cancel-b" id="a_cancel">Cancel</button><button class="save-b" id="a_add">＋ Add to Learning</button></div></div></div>`;
+    <div class="modal-btns"><button class="cancel-b" id="a_cancel">Cancel</button><button class="save-b" id="a_add">Add to Learning</button></div></div></div>`;
   document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
   document.getElementById("a_cancel").onclick=closeModal;
   document.getElementById("a_add").onclick=()=>{
@@ -403,7 +405,7 @@ function showNewWords(list){
       <span class="nh">${w.hanzi}</span>
       <span class="np">${esc(w.pinyin)}</span>
       <span class="nd">${esc(w.def).split(",")[0]}</span>
-      <button class="spk sm" data-spk="${w.hanzi}">🔊</button></div>`).join("")}</div>
+      <button class="spk sm" data-spk="${w.hanzi}">Play</button></div>`).join("")}</div>
     <div class="modal-btns"><button class="save-b" id="nw_close">Start studying</button></div></div></div>`;
   document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
   document.getElementById("nw_close").onclick=closeModal;
@@ -417,26 +419,25 @@ function nextCard(){
   document.getElementById("progBar").style.width=startCount?(100*(startCount-queue.length-(current?1:0))/startCount)+"%":"0%";}
 function renderCard(rev){
   const host=document.getElementById("cardHost");
-  if(!current){host.innerHTML=`<div class="empty">No deck yet.<br>Tap <b>🎯 Build deck</b> to choose your words, or <b>＋ Add words</b> to start learning new ones.</div>`;return;}
+  if(!current){host.innerHTML=`<div class="empty">No deck yet.<br>Tap <b>Build deck</b> to choose your words, or <b>Add words</b> to start learning new ones.</div>`;return;}
   const c=current,a=acc(c);let front,back;
-  const spk=`<button class="spk" data-spk="${c.hanzi}" title="Play audio">🔊</button>`;
+  const spk=`<button class="spk" data-spk="${c.hanzi}" title="Play audio">Play</button>`;
   if(c._cmp){
     // Compound = writing practice: prompt with pinyin (+ meaning), reveal the characters only on flip.
     front=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.def)}</div>`;
     back=`<div class="han">${c.hanzi}</div>`;
   }else if(dir==="char"){front=`<div class="han">${c.hanzi}</div>`;back=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.def)}</div>${sentHL(c)}`;}
   else{front=`<div class="prompt">${esc(c.def)}</div>`;back=`<div class="han">${c.hanzi}</div><div class="py">${esc(c.pinyin)} ${spk}</div>${sentHL(c)}`;}
-  const wstat=c._cmp?`✍️ write the characters`:`✓ ${c.correct} · ✕ ${c.wrong}${a!==null?` · ${a}%`:""} · ▲ ${c.streak||0}/${settings.promoteThreshold}`;
+  const wstat=c._cmp?`write the characters`:`✓ ${c.correct} · ✕ ${c.wrong}${a!==null?` · ${a}%`:""} · ▲ ${c.streak||0}/${settings.promoteThreshold}`;
   const meta=c._cmp?`<span class="badge b-bidaily">Compound</span>`:`<span class="badge b-${c.bucket.toLowerCase()}">${BLABEL[c.bucket]}</span>${hsel(c)?`<span class="badge b-weekly">${hsel(c)}</span>`:""}`;
   host.innerHTML=`<div class="card" id="card">
     <div class="wstat">${wstat}</div>
     <div class="meta">${meta}</div>
     ${front}${rev?back:`<div class="hint">tap to reveal</div>`}</div>
     <div class="ctrlbar">
-      <div class="cgroup"><button class="cbtn" id="bAudio">🔊</button><div class="clabel">Audio</div></div>
-      ${rev?`<div class="cgroup"><button class="cbtn big miss" id="bWrong">✕</button><div class="clabel">Missed</div></div>
-            <div class="cgroup"><button class="cbtn big got" id="bRight">✓</button><div class="clabel">Got it</div></div>`:``}
-      <div class="cgroup"><button class="cbtn skip" id="bSkip">⏭</button><div class="clabel">Skip</div></div>
+      <button class="cbtn" id="bAudio">Audio</button>
+      ${rev?`<button class="cbtn miss" id="bWrong">Missed</button><button class="cbtn got" id="bRight">Got it</button>`:``}
+      <button class="cbtn skip" id="bSkip">Skip</button>
     </div>`;
   document.getElementById("card").onclick=e=>{if(e.target.closest("[data-spk]"))return;if(!rev)renderCard(true);};
   document.getElementById("bAudio").onclick=()=>speak(c.hanzi);
@@ -512,7 +513,7 @@ function openIntro(w){
   document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal" style="text-align:center">
     <div style="font-size:12px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:1px">✦ New word added to Daily</div>
     <div style="font-size:72px;font-weight:600;margin:8px 0">${w.hanzi}</div>
-    <div style="color:var(--accent2);font-size:24px;font-weight:700">${esc(w.pinyin)} <button class="spk" data-spk="${w.hanzi}">🔊</button></div>
+    <div style="color:var(--accent2);font-size:24px;font-weight:700">${esc(w.pinyin)} <button class="spk" data-spk="${w.hanzi}">Play</button></div>
     <div style="color:var(--muted);margin-top:10px;font-size:15px">${esc(w.def)}</div>
     ${w.sent?`<div style="margin-top:14px;display:flex;justify-content:center">${sentHL(w)}</div>`:""}
     <div style="font-size:12px;color:var(--muted);margin-top:12px">HSK ${w.hsk||"—"} · Frequency rank ${w.freq||"—"}</div>
@@ -539,7 +540,7 @@ function openAdd(){document.getElementById("modalHost").innerHTML=`<div class="o
     save();closeModal();renderStats();renderChips();renderBrowse();};}
 function openDetail(h){const w=words.find(x=>x.hanzi===h);if(!w)return;const a=acc(w);
   document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal">
-    <h3 style="font-size:44px;text-align:center">${w.hanzi}${w.trad?` <span style="font-size:20px;color:var(--muted)">(${w.trad})</span>`:""} <button class="spk" data-spk="${w.hanzi}">🔊</button></h3>
+    <h3 style="font-size:44px;text-align:center">${w.hanzi}${w.trad?` <span style="font-size:20px;color:var(--muted)">(${w.trad})</span>`:""} <button class="spk" data-spk="${w.hanzi}">Play</button></h3>
     <div class="wd"><b>Pinyin:</b> ${esc(w.pinyin)||"—"}<br><b>Meaning:</b> ${esc(w.def)||"—"}<br>
       <b>Batch:</b> <span class="badge b-${w.bucket.toLowerCase()}">${BLABEL[w.bucket]}</span> &nbsp;
       <b>HSK:</b> ${w.hsk||"—"} &nbsp; <b>Freq:</b> ${w.freq||"—"}<br>
@@ -549,7 +550,7 @@ function openDetail(h){const w=words.find(x=>x.hanzi===h);if(!w)return;const a=a
       ${w.sent?`<br><b>Example:</b>${sentHL(w)}`:""}
       <div class="movebar"><span style="font-size:12px">Move to:</span>${BUCKETS.map(b=>`<button data-mv="${b}">${BLABEL[b]}</button>`).join("")}</div>
     </div>
-    <div id="delZone"><div class="modal-btns"><button class="del-b" id="m_del">🗑 Delete word</button><button class="save-b" id="m_close">Close</button></div></div>
+    <div id="delZone"><div class="modal-btns"><button class="del-b" id="m_del">Delete word</button><button class="save-b" id="m_close">Close</button></div></div>
     </div></div>`;
   document.getElementById("m_close").onclick=closeModal;document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
   document.querySelectorAll("[data-mv]").forEach(b=>b.onclick=()=>{w.bucket=b.dataset.mv;save();closeModal();renderStats();renderChips();renderBrowse();});
@@ -574,7 +575,7 @@ function openSettings(){document.getElementById("modalHost").innerHTML=`<div cla
     <label class="switch"><input type="checkbox" id="s_auto" ${settings.autoplay?"checked":""}><span class="slider"></span></label></div>
   <div class="setrow"><div><div class="t">Speech speed</div><div class="s" id="rateLbl">${settings.rate.toFixed(1)}×</div></div>
     <input type="range" id="s_rate" min="0.5" max="1.2" step="0.1" value="${settings.rate}" style="width:130px"></div>
-  <div class="setrow"><div><div class="t">Test pronunciation</div><div class="s">Tap to hear 你好 (nǐ hǎo)</div></div><button class="spk" data-spk="你好">🔊</button></div>
+  <div class="setrow"><div><div class="t">Test pronunciation</div><div class="s">Tap to hear 你好 (nǐ hǎo)</div></div><button class="spk" data-spk="你好">Play</button></div>
   <div class="setrow"><div><div class="t">Progress file</div><div class="s">Save / load this profile (vocab + stats)</div></div>
     <div style="display:flex;gap:6px"><button class="minib" id="s_save">Save</button><button class="minib" id="s_load">Load</button></div></div>
   <div class="setrow"><div><div class="t">Save folder</div><div class="s" id="folderName"></div></div>
@@ -673,6 +674,8 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelect
   const v=t.dataset.view;document.getElementById("study").classList.toggle("hidden",v!=="study");document.getElementById("browse").classList.toggle("hidden",v!=="browse");if(v==="browse")renderBrowse();});
 document.getElementById("gear").onclick=openSettings;
 document.getElementById("dirSeg").onclick=e=>{const b=e.target.closest("button");if(!b)return;dir=b.dataset.dir;document.querySelectorAll("#dirSeg button").forEach(x=>x.classList.toggle("on",x===b));renderCard(false);};
+document.getElementById("openDeck").onclick=openDeck;
+document.getElementById("openAdd").onclick=openAddWords;
 ["search","fBucket","fHsk"].forEach(id=>document.getElementById(id).oninput=renderBrowse);
 document.querySelectorAll("th[data-sort]").forEach(th=>th.onclick=()=>{const k=th.dataset.sort;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=1;}renderBrowse();});
 document.getElementById("tbody").onclick=e=>{if(e.target.closest("[data-spk]"))return;const tr=e.target.closest("tr");if(tr&&tr.dataset.h)openDetail(tr.dataset.h);};
@@ -731,8 +734,8 @@ function renderCharacter(){
   document.getElementById("sidebar").innerHTML=`
     <div class="profrow">
       <select id="profSel">${profiles.map(p=>`<option value="${p.id}" ${p.id===activeId?"selected":""}>${esc(p.name)}</option>`).join("")}</select>
-      <button class="profbtn" id="profNew" title="New profile">＋</button>
-      <button class="profbtn" id="profMng" title="Manage profiles">⚙</button>
+      <button class="profbtn" id="profNew" title="New profile">New</button>
+      <button class="profbtn" id="profMng" title="Manage profiles">Edit</button>
     </div>
     <div class="hero">
     <div class="avatar" id="avatarBtn" title="Customize">${game.avatar}</div>
@@ -781,7 +784,7 @@ function openProfiles(){
     <div class="wd">Each profile keeps its own words, progress, and character.</div>
     <div id="profList">${profiles.map(p=>`<div class="setrow"><div><div class="t">${esc(p.name)}${p.id===activeId?' <span style="color:var(--accent)">(active)</span>':''}</div></div>
       <div style="display:flex;gap:6px"><button class="minib" data-ren="${p.id}">Rename</button><button class="minib danger" data-del="${p.id}" ${profiles.length<2?"disabled":""}>Delete</button></div></div>`).join("")}</div>
-    <div class="modal-btns"><button class="minib" id="p_new" style="flex:1">＋ New profile</button><button class="save-b" id="p_close">Done</button></div></div></div>`;
+    <div class="modal-btns"><button class="minib" id="p_new" style="flex:1">New profile</button><button class="save-b" id="p_close">Done</button></div></div></div>`;
   document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
   document.getElementById("p_close").onclick=closeModal;
   document.getElementById("p_new").onclick=()=>{closeModal();createProfile();};
