@@ -851,7 +851,7 @@ function attrList(){
   let cor=0,attempted=0;words.forEach(w=>{cor+=w.correct;if(w.correct+w.wrong>0)attempted++;});
   const defs=[
     {k:"Power",i:"💪",exp:cor,base:8,d:"correct answers"},
-    {k:"Consistency",i:"🔥",exp:(game.totalDays-1)+(game.bestDayStreak||1),base:3,d:"days practiced"},
+    {k:"Consistency",i:"🔥",exp:(game.totalDays||1)+(game.bestDayStreak||1),base:2,d:"days practiced"},
     {k:"Memory",i:"🧠",exp:(game.mastersEarned||0),base:5,d:"masteries earned"},
     {k:"Wisdom",i:"📚",exp:attempted,base:10,d:"words practiced"},
     {k:"Focus",i:"⚡",exp:(game.bestStreak||0),base:3,d:"best streak"},
