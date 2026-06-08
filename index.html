@@ -991,14 +991,17 @@ function newText(){const pane=document.getElementById("readPane");
 function renderText(){const t=curText,pane=document.getElementById("readPane"),RD=window.RDICT||{},known=knownReadSet();
   let html="",i=0,n=t.t.length;
   while(i<n){const ch=t.t[i];
-    if(!(ch>="一"&&ch<="鿿")){html+=esc(ch);i++;continue;}
+    if(!(ch>="一"&&ch<="鿿")){html+=(ch==="\n"?"<br>":esc(ch));i++;continue;}
     let seg=null;for(let L=Math.min(4,n-i);L>=1;L--){const w=t.t.substr(i,L);if(RD[w]){seg=w;break;}}
     if(!seg){html+=`<span class="rw rx">${esc(ch)}</span>`;i++;continue;}
     const v=RD[seg],bar=v.indexOf("|"),isNew=[...seg].some(c=>!known.has(c));
     html+=`<span class="rw${isNew?" new":""}" data-w="${esc(seg)}" data-p="${esc(v.slice(0,bar))}" data-m="${esc(v.slice(bar+1))}">${esc(seg)}</span>`;i+=seg.length;}
   pane.innerHTML=html;pane.classList.toggle("pin",readPin);
   document.getElementById("readMeta").textContent=t.t.length+" characters";
-  document.getElementById("readSrc").textContent=t.s==="wiki"?("From Chinese Wikipedia — “"+(t.title||"")+"” (CC BY-SA)"):"From the Tatoeba corpus (CC BY)";}
+  document.getElementById("readSrc").textContent=
+    t.s==="classic"?((t.author||"佚名")+"《"+(t.title||"")+"》 — 选自《"+(t.coll||"")+"》（公有领域 · public domain）")
+    :t.s==="wiki"?("From Chinese Wikipedia — “"+(t.title||"")+"” (CC BY-SA)")
+    :"From the Tatoeba corpus (CC BY)";}
 function posTip(e){const tp=document.getElementById("rtip");const x=Math.min(e.clientX+14,window.innerWidth-tp.offsetWidth-12);tp.style.left=Math.max(8,x)+"px";tp.style.top=(e.clientY+18)+"px";}
 document.addEventListener("mouseover",e=>{const w=e.target.closest&&e.target.closest(".rw[data-m]");if(!w)return;const tp=document.getElementById("rtip");tp.innerHTML=`<b>${w.dataset.w}</b> <span class="tp-p">${w.dataset.p}</span><br>${w.dataset.m}`;tp.style.display="block";posTip(e);});
 document.addEventListener("mousemove",e=>{const tp=document.getElementById("rtip");if(tp.style.display==="block")posTip(e);});
