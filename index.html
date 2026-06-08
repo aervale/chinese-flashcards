@@ -74,6 +74,12 @@ td.acc{font-weight:700;white-space:nowrap}
 .dtag{padding:7px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);cursor:pointer;font-size:13px;font-weight:700;width:auto;height:auto}
 .dtag.on{border-color:var(--accent);color:#fff;background:var(--accent)}
 .flag{margin-right:2px}
+.newlist{max-height:46vh;overflow:auto;margin:8px 0;border:1px solid var(--line);border-radius:10px}
+.newrow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.newrow:last-child{border-bottom:none}
+.newrow .nh{font-size:24px;font-weight:600;width:32px;text-align:center}
+.newrow .np{color:var(--accent2);font-weight:700;font-size:13px;white-space:nowrap;min-width:64px}
+.newrow .nd{color:var(--muted);font-size:13px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .study-wrap{max-width:640px;margin:0 auto;text-align:center}
 .progress{height:6px;background:var(--panel2);border-radius:3px;margin-bottom:16px;overflow:hidden}
 .progress>div{height:100%;background:var(--accent);width:0;transition:width .3s}
@@ -327,7 +333,7 @@ function renderDeckBar(){
   document.getElementById("openAdd").onclick=openAddWords;
   const r=document.getElementById("deckReset");if(r)r.onclick=resetSet;
 }
-let deckSrc=new Set(["Daily","Bidaily"]),deckSize=50,deckWeak=false,addCount=10;
+let deckSrc=new Set(["Daily","Bidaily"]),deckSize=50,deckWeak=false,addCount=10,addShow=true;
 function openDeck(){
   document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal">
     <h3>Build practice deck</h3>
@@ -358,18 +364,33 @@ function openAddWords(){
     <h3>Add new words</h3>
     <div class="wd" style="margin-bottom:6px">Takes the easiest (most common) words still in Archive, moves them into <b>Learning</b>, and adds them to your current deck. ${avail} words left in Archive.</div>
     <label>How many to add</label><input id="a_size" type="number" min="1" max="200" value="${addCount}">
+    <div class="setrow" style="margin-top:10px"><div><div class="t">Show the new words</div><div class="s">Preview the words you just added before studying them</div></div>
+      <label class="switch"><input type="checkbox" id="a_show" ${addShow?"checked":""}><span class="slider"></span></label></div>
     <div class="modal-btns"><button class="cancel-b" id="a_cancel">Cancel</button><button class="save-b" id="a_add">＋ Add to Learning</button></div></div></div>`;
   document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
   document.getElementById("a_cancel").onclick=closeModal;
   document.getElementById("a_add").onclick=()=>{
     addCount=Math.max(1,Math.min(200,+document.getElementById("a_size").value||10));
+    addShow=document.getElementById("a_show").checked;
     const pool=words.filter(w=>w.bucket==="Archive"&&!skipPool.has(w.hanzi)).sort((a,b)=>(a.freq??1e9)-(b.freq??1e9));
     if(!pool.length){toast("No words left in Archive");return;}
     const chosen=pool.slice(0,addCount);
     if(!Array.isArray(game.set))game.set=[];
     chosen.forEach(w=>{w.bucket="Daily";w.streak=0;if(!game.set.includes(w.hanzi))game.set.push(w.hanzi);});
     saveGame();save();renderStats();renderDeckBar();buildQueue();if(!current)nextCard();renderBrowse();closeModal();
-    toast("Added "+chosen.length+" words to Learning");};
+    if(addShow)showNewWords(chosen);else toast("Added "+chosen.length+" words to Learning");};
+}
+function showNewWords(list){
+  document.getElementById("modalHost").innerHTML=`<div class="overlay" id="ov"><div class="modal">
+    <h3>${list.length} new word${list.length>1?"s":""} added</h3>
+    <div class="newlist">${list.map(w=>`<div class="newrow">
+      <span class="nh">${w.hanzi}</span>
+      <span class="np">${esc(w.pinyin)}</span>
+      <span class="nd">${esc(w.def).split(",")[0]}</span>
+      <button class="spk sm" data-spk="${w.hanzi}">🔊</button></div>`).join("")}</div>
+    <div class="modal-btns"><button class="save-b" id="nw_close">Start studying</button></div></div></div>`;
+  document.getElementById("ov").onclick=e=>{if(e.target.id==="ov")closeModal();};
+  document.getElementById("nw_close").onclick=closeModal;
 }
 function resetSet(){
   if(confirm("Reset your deck back to the default — the 10 most common words? Your word levels and stats are kept.")){
