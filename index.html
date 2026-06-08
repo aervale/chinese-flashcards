@@ -477,18 +477,23 @@ function renderCard(rev){
   if(!current){host.innerHTML=`<div class="empty">No deck yet.<br>Tap <b>Build deck</b> to choose your words, or <b>Add words</b> to start learning new ones.</div>`;return;}
   const c=current,a=acc(c);let front,back;
   const spk=`<button class="spk" data-spk="${c.hanzi}" title="Play audio">🔊</button>`;
-  if(c._cmp){
-    // Compound = writing practice: prompt with pinyin (+ meaning), reveal the characters only on flip.
-    front=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.def)}</div>`;
-    back=`<div class="han">${c.hanzi}</div>`;
-  }else if(dir==="char"){front=`<div class="han">${c.hanzi}</div>`;back=`<div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.defh||c.def)}</div>${sentHL(c)}`;}
-  else{front=`<div class="pybig">${esc(c.pinyin)}</div><div class="def">${esc(c.def)}</div>`;back=`<div class="han">${c.hanzi}</div><div class="py">${esc(c.pinyin)} ${spk}</div>${sentHL(c)}`;}
+  let face;
+  if(rev){
+    // revealed: character on top, then pinyin, then definition (then example)
+    face=`<div class="han">${c.hanzi}</div><div class="py">${esc(c.pinyin)} ${spk}</div><div class="def">${esc(c.defh||c.def)}</div>${c._cmp?"":sentHL(c)}`;
+  }else if(c._cmp){
+    face=`<div class="pybig">${esc(c.pinyin)}</div><div class="def">${esc(c.def)}</div>`;
+  }else if(dir==="char"){
+    face=`<div class="han">${c.hanzi}</div>`;
+  }else{
+    face=`<div class="pybig">${esc(c.pinyin)}</div><div class="def">${esc(c.def)}</div>`;
+  }
   const wstat=c._cmp?`write the characters`:`✓ ${c.correct} · ✕ ${c.wrong}${a!==null?` · ${a}%`:""} · ▲ ${c.streak||0}/${settings.promoteThreshold}`;
   const meta=c._cmp?`<span class="badge b-bidaily">Compound</span>`:`<span class="badge b-${c.bucket.toLowerCase()}">${BLABEL[c.bucket]}</span>${hsel(c)?`<span class="badge b-weekly">${hsel(c)}</span>`:""}`;
   host.innerHTML=`<div class="card" id="card">
     <div class="wstat">${wstat}</div>
     <div class="meta">${meta}</div>
-    ${front}${rev?back:`<div class="hint">tap to reveal</div>`}</div>
+    ${face}${rev?"":`<div class="hint">tap to reveal</div>`}</div>
     <div class="ctrlbar">
       <button class="cbtn" id="bAudio" title="Play audio">🔊</button>
       ${rev?`<button class="cbtn miss" id="bWrong" title="Missed">✕</button><button class="cbtn got" id="bRight" title="Got it">✓</button>`:``}
