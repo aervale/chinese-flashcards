@@ -54,10 +54,7 @@ at comes up more often.
 - Word list, buckets, HSK levels and frequency ranks come from my own sheet.
 - Definitions are padded out with common compounds (组词) and example sentences
   so each entry shows how the character is actually used.
-- Audio is pre-rendered Mandarin TTS, generated with [Piper](https://github.com/rhasspy/piper)
-  using the `zh_CN-chaowen-medium` voice. That voice is trained on a CC0
-  (public-domain) dataset, so the clips are free to use and redistribute with no
-  attribution required. The script that regenerates them is `generate_audio_colab.py`.
+- Audio is pre-rendered Mandarin TTS.
 
 ## Notes
 
