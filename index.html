@@ -205,6 +205,7 @@ main{flex:1;max-width:1040px;margin:0 auto;padding:22px 26px}
 .fxpop{position:absolute;left:50%;top:38%;transform:translateX(-50%);font-size:30px;font-weight:800;animation:floatUp 1s ease-out forwards;text-shadow:0 2px 8px rgba(0,0,0,.25)}
 .fxpop.good{color:var(--green)}.fxpop.bad{color:var(--red)}
 .fxpop.demote{top:54%;font-size:19px;font-weight:700;color:var(--yellow);animation:floatUp 1.2s ease-out forwards}
+.fxpop.promote{top:54%;font-size:19px;font-weight:700;color:var(--green);animation:floatUp 1.2s ease-out forwards}
 @keyframes floatUp{0%{opacity:0;transform:translate(-50%,10px) scale(.8)}20%{opacity:1;transform:translate(-50%,-4px) scale(1.1)}100%{opacity:0;transform:translate(-50%,-60px) scale(1)}}
 .avpick{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .avpick button{font-size:24px;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);cursor:pointer}
@@ -286,7 +287,7 @@ main{flex:1;max-width:1040px;margin:0 auto;padding:22px 26px}
   <div class="deckbar">
     <div class="seg" id="dirSeg"><button data-dir="char">汉字 → Meaning</button><button data-dir="term" class="on">Meaning → 汉字</button></div>
     <button class="setbtn" id="openDeck">Build deck</button>
-    <button class="setbtn ghost" id="shuffleDeck" title="Shuffle the deck into a new random order">🔀 Shuffle</button>
+    <button class="setbtn ghost" id="shuffleDeck" title="Shuffle the deck into a new random order">Shuffle</button>
     <button class="setbtn ghost" id="openAdd">Add words</button>
   </div>
   <div class="study-wrap"><div class="progress"><div id="progBar"></div></div><div id="cardHost"></div></div>
@@ -552,9 +553,9 @@ function applyAnswer(w,ok){
   else{w.wrong++;w.streak=0;w.bucket=PREV[w.bucket];}
   return was!=="Retired"&&w.bucket==="Retired"; // newly mastered
 }
-function grade(ok){const c=current;let mastered=0,demotedTo=null;
-  if(c._cmp){c.parts.forEach(ch=>{const w=wordByHanzi(ch);if(w){const wb=w.bucket;if(applyAnswer(w,ok))mastered++;if(!ok&&w.bucket!==wb&&!demotedTo)demotedTo=w.bucket;}});if(!ok)queue.push(c);}
-  else{const wb=c.bucket;if(applyAnswer(c,ok))mastered++;if(!ok&&c.bucket!==wb)demotedTo=c.bucket;if(!ok)queue.push(c);}
+function grade(ok){const c=current;let mastered=0,demotedTo=null,promotedTo=null;
+  if(c._cmp){c.parts.forEach(ch=>{const w=wordByHanzi(ch);if(w){const wb=w.bucket;if(applyAnswer(w,ok))mastered++;if(!ok&&w.bucket!==wb&&!demotedTo)demotedTo=w.bucket;if(ok&&w.bucket!==wb&&w.bucket!=="Retired"&&!promotedTo)promotedTo=w.bucket;}});if(!ok)queue.push(c);}
+  else{const wb=c.bucket;if(applyAnswer(c,ok))mastered++;if(!ok&&c.bucket!==wb)demotedTo=c.bucket;if(ok&&c.bucket!==wb&&c.bucket!=="Retired")promotedTo=c.bucket;if(!ok)queue.push(c);}
   const gained=ok?((c._cmp?15:10)+mastered*50):-10; // miss costs 10 XP (≈ one correct answer)
   const lvBefore=levelInfo(game.xp).level;
   game.xp=Math.max(0,game.xp+gained);game.reviews=(game.reviews||0)+1;game.mastersEarned=(game.mastersEarned||0)+mastered;
@@ -564,6 +565,7 @@ function grade(ok){const c=current;let mastered=0,demotedTo=null;
   saveGame();save();renderStats();renderChips();renderCharacter();
   reactGrade(ok,gained,mastered);
   if(demotedTo)bucketDownPop(demotedTo);
+  if(promotedTo)bucketUpPop(promotedTo);
   if(lvAfter>lvBefore)levelUp(lvAfter);
   else if(mastered>0)masterCelebrate(mastered);
   nextCard();}
@@ -968,6 +970,11 @@ function reactGrade(ok,gained,mastered){
 function bucketDownPop(bucket){
   const fx=document.getElementById("fx");const p=document.createElement("div");
   p.className="fxpop demote";p.textContent="↓ "+BLABEL[bucket];
+  fx.appendChild(p);setTimeout(()=>p.remove(),1200);
+}
+function bucketUpPop(bucket){
+  const fx=document.getElementById("fx");const p=document.createElement("div");
+  p.className="fxpop promote";p.textContent="↑ "+BLABEL[bucket];
   fx.appendChild(p);setTimeout(()=>p.remove(),1200);
 }
 function openCharacter(){
