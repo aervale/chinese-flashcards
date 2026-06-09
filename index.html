@@ -554,7 +554,11 @@ function applyAnswer(w,ok){
   return was!=="Retired"&&w.bucket==="Retired"; // newly mastered
 }
 function grade(ok){const c=current;let mastered=0,demotedTo=null,promotedTo=null;
-  if(c._cmp){c.parts.forEach(ch=>{const w=wordByHanzi(ch);if(w){const wb=w.bucket;if(applyAnswer(w,ok))mastered++;if(!ok&&w.bucket!==wb&&!demotedTo)demotedTo=w.bucket;if(ok&&w.bucket!==wb&&w.bucket!=="Retired"&&!promotedTo)promotedTo=w.bucket;}});if(!ok)queue.push(c);}
+  if(c._cmp){
+    // A correct compound does NOT advance its component characters — it only
+    // affects them when missed. Duplicate characters (e.g. 谢谢) count once.
+    if(!ok){const seen=new Set();c.parts.forEach(ch=>{if(seen.has(ch))return;seen.add(ch);const w=wordByHanzi(ch);if(w){const wb=w.bucket;applyAnswer(w,false);if(w.bucket!==wb&&!demotedTo)demotedTo=w.bucket;}});queue.push(c);}
+  }
   else{const wb=c.bucket;if(applyAnswer(c,ok))mastered++;if(!ok&&c.bucket!==wb)demotedTo=c.bucket;if(ok&&c.bucket!==wb&&c.bucket!=="Retired")promotedTo=c.bucket;if(!ok)queue.push(c);}
   const gained=ok?((c._cmp?15:10)+mastered*50):-10; // miss costs 10 XP (≈ one correct answer)
   const lvBefore=levelInfo(game.xp).level;

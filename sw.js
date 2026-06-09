@@ -1,5 +1,5 @@
 /* Service worker: offline app shell + runtime caching of audio/images. */
-const CACHE = "chinese-flashcards-v4";
+const CACHE = "chinese-flashcards-v5";
 const CORE = [
   "./",
   "index.html",
